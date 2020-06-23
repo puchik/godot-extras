@@ -5,7 +5,7 @@ using namespace godot;
 void GIProbeLOD::_register_methods() {
     register_method("_process", &GIProbeLOD::_process);
     register_method("_ready", &GIProbeLOD::_ready);
-    register_property<GIProbeLOD, float>("unloadDist", &GIProbeLOD::unloadDist, 80.0f); 
+    register_property<GIProbeLOD, float>("hideDist", &GIProbeLOD::hideDist, 80.0f); 
     register_property<GIProbeLOD, float>("fadeRange", &GIProbeLOD::fadeRange, 5.0f); 
 
     register_property<GIProbeLOD, float>("fadeSpeed", &GIProbeLOD::fadeSpeed, 1.0f);
@@ -66,5 +66,5 @@ void GIProbeLOD::_process(float delta) {
 
     // Get our target value
     // (max - current) / (max - min) will give us the ratio of where we want to set our values
-    probeTargetEnergy = CLAMP((unloadDist - distance) / (unloadDist - (unloadDist - fadeRange)), 0.0f, 1.0f);
+    probeTargetEnergy = CLAMP((hideDist - distance) / (hideDist - (hideDist - fadeRange)), 0.0f, 1.0f);
 }

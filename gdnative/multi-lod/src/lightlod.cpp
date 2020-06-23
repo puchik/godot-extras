@@ -6,7 +6,7 @@ void LightLOD::_register_methods() {
     register_method("_process", &LightLOD::_process);
     register_method("_ready", &LightLOD::_ready);
     register_property<LightLOD, float>("shadowDist", &LightLOD::shadowDist, 50.0f);
-    register_property<LightLOD, float>("unloadDist", &LightLOD::unloadDist, 150.0f); // -1 to never unload
+    register_property<LightLOD, float>("hideDist", &LightLOD::hideDist, 150.0f); // -1 to never unload
     register_property<LightLOD, float>("fadeRange", &LightLOD::fadeRange, 5.0f); 
 
     register_property<LightLOD, float>("fadeSpeed", &LightLOD::fadeSpeed, 1.0f);
@@ -57,7 +57,7 @@ void LightLOD::_process(float delta) {
 
     // Get our target values for light and shadow
     // (max - current) / (max - min) will give us the ratio of where we want to set our values
-    lightTargetEnergy = CLAMP((unloadDist - distance) / (unloadDist - (unloadDist - fadeRange)), 0.0f, 1.0f);
+    lightTargetEnergy = CLAMP((hideDist - distance) / (hideDist - (hideDist - fadeRange)), 0.0f, 1.0f);
 
     // Feels like creating a new Color every time might not be a great idea
     float shadowRatio = CLAMP((shadowDist - distance) / (shadowDist - (shadowDist - fadeRange)), 0.0f, 1.0f);

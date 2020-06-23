@@ -6,9 +6,12 @@ using namespace godot;
 void LOD::_register_methods() {
     register_method("_process", &LOD::_process);
     register_method("_ready", &LOD::_ready);
-    register_property<LOD, float>("lod1dist", &LOD::lod1dist, 30.0f);
+    register_property<LOD, float>("lod1dist", &LOD::lod1dist, 30.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
     register_property<LOD, float>("lod2dist", &LOD::lod2dist, 60.0f);
-    register_property<LOD, float>("unloadDist", &LOD::unloadDist, 130.0f); // -1 to never unload
+    register_property<LOD, float>("hideDist", &LOD::hideDist, 130.0f);
+    register_property<LOD, float>("unloadDist", &LOD::unloadDist, -1.0f);
+
+    register_property<LOD, bool>("disableProcessing", &LOD::disableProcessing, true); // Hide the node as well as disabling its _process and _physics_process
 
     register_property<LOD, float>("tickSpeed", &LOD::tickSpeed, 0.2f);
 
@@ -93,39 +96,82 @@ void LOD::_process(float delta) {
     // Get the distance from the node to the camera
     float distance = camera->get_global_transform().origin.distance_to(get_global_transform().origin);
 
-    if (unloadDist > 0.0f && distance > unloadDist && lod0) {
+    if (unloadDist > 0.0f && distance > unloadDist) {
+        queue_free();
+    } else if (hideDist > 0.0f && distance > hideDist) {
         if (lod0) {
             lod0->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod0, false);
+            }
         }
         if (lod1) {
             lod1->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod1, false);
+            }
         }
         if (lod2) {
             lod2->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod2, false);
+            }
         }
-    } else if (distance > lod2dist && lod1) {
+    } else if (lod2dist > 0.0f && distance > lod2dist && lod2) {
         lod2->show();
+        if (disableProcessing) {
+            setNodeProcessing(lod2, true);
+        }
         if (lod0) {
             lod0->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod0, false);
+            }
         }
         if (lod1) {
             lod1->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod1, false);
+            }
         }
-    } else if (distance > lod1dist && lod2) {
+    } else if (lod1dist > 0.0f && distance > lod1dist && lod1) {
         lod1->show();
+        if (disableProcessing) {
+            setNodeProcessing(lod1, true);
+        }
         if (lod0) {
             lod0->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod0, false);
+            }
         }
         if (lod2) {
             lod2->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod2, false);
+            }
         }
     } else {
         lod0->show();
+        if (disableProcessing) {
+            setNodeProcessing(lod0, true);
+        }
         if (lod1) {
             lod1->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod1, false);
+            }
         }
         if (lod2) {
             lod2->hide();
+            if (disableProcessing) {
+                setNodeProcessing(lod2, false);
+            }
         }
     }
+}
+
+void LOD::setNodeProcessing(Spatial* node, bool state) {
+    node->set_process(state);
+    node->set_physics_process(state);
 }

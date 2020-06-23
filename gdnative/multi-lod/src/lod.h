@@ -36,9 +36,12 @@ private:
     float tickSpeed = 0.2f;
     float timePassed = 0.0f;
 
-    float lod1dist = 30.0f;
+    float lod1dist = 30.0f; // put any of these to -1 if you don't have a lod or don't want to unload etc
     float lod2dist = 60.0f;
-    float unloadDist = 130.0f; // -1 to never unload
+    float hideDist = 130.0f;
+    float unloadDist = -1.0f;
+
+    bool disableProcessing = true;
 
     NodePath lod0path;
     NodePath lod1path;
@@ -60,6 +63,8 @@ public:
 
     void _ready();
     void _process(float delta);
+
+    void setNodeProcessing(Spatial* node, bool state);
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
@@ -72,7 +77,7 @@ private:
 
     // Don't set these to stupid values because I won't be checking them
     float shadowDist = 20.0f;
-    float unloadDist = 80.0f; // -1 to never unload
+    float hideDist = 80.0f; // -1 to never hide
     float fadeRange = 5.0f; // For ex, the intensity of the shadow will adjust from 0 to 1 between [shadowDist - fadeRange, shadowDist]
 
     float fadeSpeed = 1.0f;
@@ -110,7 +115,7 @@ private:
     float timePassed = 0.0f;
 
     // Don't set these to stupid values because I won't be checking them
-    float unloadDist = 80.0f;
+    float hideDist = 80.0f;
     float fadeRange = 5.0f; // The energy of the probe will adjust from 0 to 1 between [unloadDist - fadeRange, unloadDist]
 
     float fadeSpeed = 1.0f;
