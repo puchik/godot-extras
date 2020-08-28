@@ -1,6 +1,8 @@
 # Multi LOD
 This is a collection of LOD systems for various built-in Godot types.
 
+More detailed write-up available [here](https://puchik.now.sh/posts/lod/).
+
 For all the sytems, there is a tick speed that specifies how often the distances should be checked. Also, setting any distance to -1 will disable a detail level (e.g. don't use
 LOD1, never fade out shadows, etc.)
 
@@ -20,7 +22,9 @@ and a range where the fading happens (max distance - fade range is when it start
 
 You need to be careful with GIProbe placement (as usual with GIProbes). The idea is to have a grid of overlapping GIProbes. Play around with the subdivison number, size of GIPRobe etc to get the effect you want without making the grid obvious. NOTE: for 4 GIProbes to be able to blend and affect a single object at the same time, you should get the [GIProbe blending patch](https://github.com/puchik/godot-extras/tree/master/patches/giprobe-blending) (also in this repository) and apply to your fork of Godot and recompile the engine. Otherwise, this "LOD" system is sort of useless.
 
-The idea is to have your "main" world meshes separated (no huge spots of ground), and have overlapping GIProbes. 
+The idea is to have your "main" world meshes separated (no huge spots of ground), and have overlapping GIProbes. Something like this (blue squares are your map chunks, green squares are GIProbes):
+
+![](https://puchik.now.sh/images/lod-post/giprobe-layout.jpg)
 
 **MultiMeshInstance**
 
