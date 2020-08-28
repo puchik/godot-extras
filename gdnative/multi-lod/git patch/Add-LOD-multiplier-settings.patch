@@ -1,0 +1,60 @@
+From c068838a69032dc75e4252cdaef90b0d7c4614b1 Mon Sep 17 00:00:00 2001
+From: Arman <48544263+puchik@users.noreply.github.com>
+Date: Fri, 28 Aug 2020 15:05:58 -0700
+Subject: [PATCH] Add LOD multiplier settings
+
+Add various project settings for multiplying global LOD distances. Should theoretically be possible with an addon but it didn't work reliably.
+---
+ doc/classes/ProjectSettings.xml | 17 +++++++++++++++++
+ servers/visual_server.cpp       |  7 +++++++
+ 2 files changed, 24 insertions(+)
+
+diff --git a/doc/classes/ProjectSettings.xml b/doc/classes/ProjectSettings.xml
+index cc8642f480..1109b96cb3 100644
+--- a/doc/classes/ProjectSettings.xml
++++ b/doc/classes/ProjectSettings.xml
+@@ -1173,6 +1173,23 @@
+ 		</member>
+ 		<member name="rendering/quality/voxel_cone_tracing/high_quality" type="bool" setter="" getter="" default="false">
+ 			Use high-quality voxel cone tracing. This results in better-looking reflections, but is much more expensive on the GPU.
++		<member name="rendering/quality/lod/global_multiplier" type="float" setter="" getter="" default="1.0">
++			The number all LOD distances will be multiplied by. You can use this to change graphics/geometry settings at runtime. Larger number means longer distances before lowering details.
++		</member>
++		<member name="rendering/quality/lod/lod1_multiplier" type="float" setter="" getter="" default="1.0">
++			The number the LOD1 distance will be multiplied by. Use this for finer global LOD multiplier control. Larger number means longer distances before lowering details.
++		</member>
++		<member name="rendering/quality/lod/lod2_multiplier" type="float" setter="" getter="" default="1.0">
++			The number the LOD2 distance will be multiplied by. Use this for finer global LOD multiplier control. Larger number means longer distances before lowering details.
++		</member>
++		<member name="rendering/quality/lod/lod3_multiplier" type="float" setter="" getter="" default="1.0">
++			The number the LOD3 distance will be multiplied by. Use this for finer global LOD multiplier control. Larger number means longer distances before lowering details.
++		</member>
++		<member name="rendering/quality/lod/hide_multiplier" type="float" setter="" getter="" default="1.0">
++			The number the hide distance will be multiplied by. Use this for finer global LOD multiplier control. Larger number means longer distances before lowering details.
++		</member>
++		<member name="rendering/quality/lod/unload_multiplier" type="float" setter="" getter="" default="1.0">
++			The number the unload distance will be multiplied by. Use this for finer global LOD multiplier control. Larger number means longer distances before lowering details.
+ 		</member>
+ 		<member name="rendering/threads/thread_model" type="int" setter="" getter="" default="1">
+ 			Thread model for rendering. Rendering on a thread can vastly improve performance, but synchronizing to the main thread can cause a bit more jitter.
+diff --git a/servers/visual_server.cpp b/servers/visual_server.cpp
+index a4a399998b..c208a610f5 100644
+--- a/servers/visual_server.cpp
++++ b/servers/visual_server.cpp
+@@ -2418,6 +2418,13 @@ VisualServer::VisualServer() {
+ 	GLOBAL_DEF("rendering/quality/depth_prepass/enable", true);
+ 	GLOBAL_DEF("rendering/quality/depth_prepass/disable_for_vendors", "PowerVR,Mali,Adreno,Apple");
+ 
++	GLOBAL_DEF("rendering/quality/lod/global_multiplier", 1.0);
++	GLOBAL_DEF("rendering/quality/lod/lod1_multiplier", 1.0);
++	GLOBAL_DEF("rendering/quality/lod/lod2_multiplier", 1.0);
++	GLOBAL_DEF("rendering/quality/lod/lod3_multiplier", 1.0);
++	GLOBAL_DEF("rendering/quality/lod/hide_multiplier", 1.0);
++	GLOBAL_DEF("rendering/quality/lod/unload_multiplier", 1.0);
++
+ 	GLOBAL_DEF("rendering/quality/filters/use_nearest_mipmap_filter", false);
+ 
+ 	GLOBAL_DEF("rendering/batching/options/use_batching", true);
+-- 
+2.26.2.windows.1
+

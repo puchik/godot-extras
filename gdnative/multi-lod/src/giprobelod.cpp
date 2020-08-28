@@ -8,6 +8,9 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, float>("hideDist", &GIProbeLOD::hideDist, 80.0f); 
     register_property<GIProbeLOD, float>("fadeRange", &GIProbeLOD::fadeRange, 5.0f); 
 
+    // Whether to use distance multipliers from project settings
+    register_property<GIProbeLOD, bool>("affectedByDistanceMultipliers", &GIProbeLOD::affectedByDistanceMultipliers, true);
+
     register_property<GIProbeLOD, float>("fadeSpeed", &GIProbeLOD::fadeSpeed, 1.0f);
 
     register_property<GIProbeLOD, float>("tickSpeed", &GIProbeLOD::tickSpeed, 0.5f);
@@ -29,6 +32,9 @@ void GIProbeLOD::_ready() {
 
     probeBaseEnergy = get_energy();
     probeTargetEnergy = probeBaseEnergy;
+
+    projectSettings = ProjectSettings::get_singleton();
+    updateLodMultipliers();
 }
 
 void GIProbeLOD::_process(float delta) {
@@ -66,5 +72,17 @@ void GIProbeLOD::_process(float delta) {
 
     // Get our target value
     // (max - current) / (max - min) will give us the ratio of where we want to set our values
-    probeTargetEnergy = CLAMP((hideDist - distance) / (hideDist - (hideDist - fadeRange)), 0.0f, 1.0f);
+    probeTargetEnergy = CLAMP((hideDist * globalDistMult - distance) / (hideDist * globalDistMult - (hideDist * globalDistMult - fadeRange)), 0.0f, 1.0f);
+}
+
+void GIProbeLOD::updateLodMultipliers() {
+    if (affectedByDistanceMultipliers) {    
+        // In case the setting (plugin/patch) is missing, make sure multipliers aren't set to 0
+        float newGlobalDist = projectSettings->get_setting("rendering/quality/lod/global_multiplier");
+        if (newGlobalDist > 0.0) {
+            globalDistMult = newGlobalDist;    
+        }
+    } else {
+        globalDistMult = 1.0f;
+    }
 }

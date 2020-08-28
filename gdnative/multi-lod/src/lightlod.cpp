@@ -9,7 +9,10 @@ void LightLOD::_register_methods() {
     register_property<LightLOD, float>("hideDist", &LightLOD::hideDist, 150.0f); // -1 to never unload
     register_property<LightLOD, float>("fadeRange", &LightLOD::fadeRange, 5.0f); 
 
-    register_property<LightLOD, float>("fadeSpeed", &LightLOD::fadeSpeed, 1.0f);
+    // Whether to use distance multipliers from project settings
+    register_property<LightLOD, bool>("affectedByDistanceMultipliers", &LightLOD::affectedByDistanceMultipliers, true);
+
+    register_property<LightLOD, float>("fadeSpeed", &LightLOD::fadeSpeed, 2.0f);
 
     register_property<LightLOD, float>("tickSpeed", &LightLOD::tickSpeed, 0.5f);
 }
@@ -34,6 +37,9 @@ void LightLOD::_ready() {
     lightTargetEnergy = lightBaseEnergy;
     shadowBaseColor = get_shadow_color();
     shadowTargetColor = shadowBaseColor;
+
+    projectSettings = ProjectSettings::get_singleton();
+    updateLodMultipliers();
 }
 
 void LightLOD::_process(float delta) {
@@ -57,11 +63,15 @@ void LightLOD::_process(float delta) {
 
     // Get our target values for light and shadow
     // (max - current) / (max - min) will give us the ratio of where we want to set our values
-    lightTargetEnergy = CLAMP((hideDist - distance) / (hideDist - (hideDist - fadeRange)), 0.0f, 1.0f);
+    if (hideDist >= 0) {
+        lightTargetEnergy = CLAMP((hideDist * globalDistMult - distance) / (hideDist * globalDistMult - (hideDist * globalDistMult - fadeRange)), 0.0f, 1.0f);
+    }
 
     // Feels like creating a new Color every time might not be a great idea
-    float shadowRatio = CLAMP((shadowDist - distance) / (shadowDist - (shadowDist - fadeRange)), 0.0f, 1.0f);
-    shadowTargetColor = Color(1.0f * shadowRatio, 1.0f * shadowRatio, 1.0f * shadowRatio, 1.0f);
+    if (shadowDist >= 0) {
+        float shadowRatio = CLAMP((shadowDist * globalDistMult - distance) / (shadowDist * globalDistMult - (shadowDist * globalDistMult - fadeRange)), 0.0f, 1.0f);
+        shadowTargetColor = Color(1.0f - shadowRatio, 1.0f - shadowRatio, 1.0f - shadowRatio, 1.0f);
+    }
 
 }
 
@@ -102,5 +112,17 @@ void LightLOD::fadeShadow(float delta) {
         if (shadowColor == white) {
             set_shadow(false);
         }
+    }
+}
+
+void LightLOD::updateLodMultipliers() {
+    if (affectedByDistanceMultipliers) {    
+        // In case the setting (plugin/patch) is missing, make sure multipliers aren't set to 0
+        float newGlobalDist = projectSettings->get_setting("rendering/quality/lod/global_multiplier");
+        if (newGlobalDist > 0.0) {
+            globalDistMult = newGlobalDist;    
+        }
+    } else {
+        globalDistMult = 1.0f;
     }
 }

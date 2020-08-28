@@ -9,6 +9,9 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, float>("minDist", &MultiMeshLOD::minDist, 5.0f); 
     register_property<MultiMeshLOD, float>("maxDist", &MultiMeshLOD::maxDist, 80.0f); 
 
+    // Whether to use distance multipliers from project settings
+    register_property<MultiMeshLOD, bool>("affectedByDistanceMultipliers", &MultiMeshLOD::affectedByDistanceMultipliers, true);
+
     register_property<MultiMeshLOD, int64_t>("minCount", &MultiMeshLOD::minCount, 0); 
     register_property<MultiMeshLOD, int64_t>("maxCount", &MultiMeshLOD::maxCount, -1); 
 
@@ -36,6 +39,9 @@ void MultiMeshLOD::_ready() {
         maxCount = multiMesh->get_instance_count();
     }
     targetCount = maxCount;
+
+    projectSettings = ProjectSettings::get_singleton();
+    updateLodMultipliers();
 }
 
 void MultiMeshLOD::_process(float delta) {
@@ -74,6 +80,18 @@ void MultiMeshLOD::_process(float delta) {
 
     // Get our target value
     // ((max - current) / (max - min))^fadeExponent will give us the ratio of where we want to set our values
-    // then we multiple by the range of instances we can have
-    targetCount = int64_t(floor(pow(CLAMP((maxDist - distance) / (maxDist  - minDist), 0.0, 1.0), fadeExponent) * (maxCount - minCount)));
+    // Multiply by how many we are interpolating then add the minimum
+    targetCount = int64_t(floor(pow(CLAMP((maxDist * globalDistMult - distance) / (maxDist * globalDistMult  - minDist * globalDistMult), 0.0, 1.0), fadeExponent) * (maxCount - minCount))) + minCount;
+}
+
+void MultiMeshLOD::updateLodMultipliers() {
+    if (affectedByDistanceMultipliers) {    
+        // In case the setting (plugin/patch) is missing, make sure multipliers aren't set to 0
+        float newGlobalDist = projectSettings->get_setting("rendering/quality/lod/global_multiplier");
+        if (newGlobalDist > 0.0) {
+            globalDistMult = newGlobalDist;    
+        }
+    } else {
+        globalDistMult = 1.0f;
+    }
 }

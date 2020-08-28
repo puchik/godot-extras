@@ -30,6 +30,21 @@ defined by the exponent. By default, the exponent = 1, meaning the fade will be 
 
 **Notes**
 
+You can also recompile Godot with the provided git patch; it is used for adding the multipliers for LOD distances so you can quickly change the settings globally if needed.
+I tried to add the multipliers with an addon, but the C++ code would not be able to load them at game launch. I suspect the plugin may be loaded after the GDNative code begins running.
+
 You need the GDNative library to point to the library file (e.g. .dll) correctly, and then the have the NativeScripts correctly point to the library. Have a read of the GDNative documentation in the docs if you're having trouble.
 
 Alternatively, the source C++ files are also in this directory. You'll need them to compile for different platforms + any changes you'd like + see the internals.
+
+**Limitations**
+
+LOD multipliers are not updated at runtime when changes are made.
+
+For multipliers, need to use a git-patch and recompile the engine to get it to work. Addon method doesn't seem to work (GDNative runs before addon initializer?).
+
+LOD is based on distance instead of screen size.
+
+**Known bugs:**
+
+You tell me :)

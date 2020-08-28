@@ -6,6 +6,8 @@
 #endif
 
 #include <Godot.hpp>
+#include <ProjectSettings.hpp>
+
 #include <Viewport.hpp>
 #include <Camera.hpp>
 #include <Transform.hpp>
@@ -36,9 +38,10 @@ private:
     float tickSpeed = 0.2f;
     float timePassed = 0.0f;
 
-    float lod1dist = 30.0f; // put any of these to -1 if you don't have a lod or don't want to unload etc
-    float lod2dist = 60.0f;
-    float hideDist = 130.0f;
+    float lod1dist = 7.0f; // put any of these to -1 if you don't have a lod or don't want to unload etc
+    float lod2dist = 12.0f;
+    float lod3dist = 30.0f;
+    float hideDist = 100.0f;
     float unloadDist = -1.0f;
 
     bool disableProcessing = true;
@@ -46,12 +49,23 @@ private:
     NodePath lod0path;
     NodePath lod1path;
     NodePath lod2path;
+    NodePath lod3path;
 
     Spatial* lod0 = NULL;
     Spatial* lod1 = NULL;
     Spatial* lod2 = NULL;
+    Spatial* lod3 = NULL;
 
     Camera* camera;
+
+    ProjectSettings* projectSettings;
+    bool affectedByDistanceMultipliers = true;
+    float globalDistMult = 1.0f;
+    float lod1DistMult = 1.0f;
+    float lod2DistMult = 1.0f;
+    float lod3DistMult = 1.0f;
+    float hideDistMult = 1.0f;
+    float unloadDistMult = 1.0f;
 
 public:
     static void _register_methods();
@@ -65,6 +79,8 @@ public:
     void _process(float delta);
 
     void setNodeProcessing(Spatial* node, bool state);
+
+    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
@@ -80,7 +96,7 @@ private:
     float hideDist = 80.0f; // -1 to never hide
     float fadeRange = 5.0f; // For ex, the intensity of the shadow will adjust from 0 to 1 between [shadowDist - fadeRange, shadowDist]
 
-    float fadeSpeed = 1.0f;
+    float fadeSpeed = 2.0f;
     Color white; // So we don't have to keep making a new Color... and for readability
 
     real_t lightBaseEnergy;
@@ -94,6 +110,11 @@ private:
     void fadeLight(float delta);
     void fadeShadow(float delta);
 
+    ProjectSettings* projectSettings;
+    bool affectedByDistanceMultipliers = true;
+    float globalDistMult = 1.0f;
+    float shadowDistMult = 1.0f;
+
 public:
     static void _register_methods();
 
@@ -104,6 +125,8 @@ public:
 
     void _ready();
     void _process(float delta);
+
+    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
 };
 
 //// GIProbe LOD -------------------------------------------------------------------
@@ -126,6 +149,10 @@ private:
 
     Camera* camera;
 
+    ProjectSettings* projectSettings;
+    bool affectedByDistanceMultipliers = true;
+    float globalDistMult = 1.0f;
+
 public:
     static void _register_methods();
 
@@ -136,6 +163,8 @@ public:
 
     void _ready();
     void _process(float delta);
+
+    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
 };
 
 //// MultiMeshInstance LOD -------------------------------------------------------------------
@@ -160,6 +189,10 @@ private:
 
     Camera* camera;
 
+    ProjectSettings* projectSettings;
+    bool affectedByDistanceMultipliers = true;
+    float globalDistMult = 1.0f;
+
     MultiMesh* multiMesh;
 
 public:
@@ -172,6 +205,8 @@ public:
 
     void _ready();
     void _process(float delta);
+
+    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
 };
 
 }
