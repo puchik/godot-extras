@@ -64,7 +64,7 @@ void LightLOD::_process(float delta) {
     // Get our target values for light and shadow
     // (max - current) / (max - min) will give us the ratio of where we want to set our values
     if (hideDist >= 0) {
-        lightTargetEnergy = CLAMP((hideDist * globalDistMult - distance) / (hideDist * globalDistMult - (hideDist * globalDistMult - fadeRange)), 0.0f, 1.0f);
+        lightTargetEnergy = CLAMP((hideDist * globalDistMult - distance) / (hideDist * globalDistMult - (hideDist * globalDistMult - fadeRange)), 0.0f, lightBaseEnergy);
     }
 
     // Feels like creating a new Color every time might not be a great idea
