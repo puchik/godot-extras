@@ -3,11 +3,11 @@
 reloadable=true
 singleton=false
 load_once=true
-symbol_prefix="godot_"
+symbol_prefix="gdn_multi_lod_"
 
 [entry]
 
-Windows.64="res://bin/win64/lod.dll"
+Windows.64="res://addons/MultiLOD/bin/win64/lod.dll"
 
 [dependencies]
 

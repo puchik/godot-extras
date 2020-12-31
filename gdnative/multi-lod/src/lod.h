@@ -1,5 +1,5 @@
-#ifndef GDEXAMPLE_H
-#define GDEXAMPLE_H
+#ifndef MULTI_LOD_H
+#define MULTI_LOD_H
 
 #ifndef CLAMP
 #define CLAMP(m_a, m_min, m_max) (((m_a) < (m_min)) ? (m_min) : (((m_a) > (m_max)) ? m_max : m_a))
@@ -7,15 +7,24 @@
 
 #include <Godot.hpp>
 #include <ProjectSettings.hpp>
+#include <SceneTree.hpp>
+#include <AABB.hpp>
+#include <Thread.hpp>
+#include <OS.hpp>
+#include <Mutex.hpp>
+#include <Semaphore.hpp>
+#include <Performance.hpp>
 
 #include <Viewport.hpp>
 #include <Camera.hpp>
 #include <Transform.hpp>
+#include <Spatial.hpp>
+#include <Vector3.hpp>
 
 // Objects
 #include <NodePath.hpp>
 #include <Node.hpp>
-#include <Spatial.hpp>
+#include <VisualInstance.hpp>
 
 // Lights
 #include <Color.hpp>
@@ -30,33 +39,123 @@
 
 namespace godot {
 
-//// Object based LOD ----------------------------------------------------------------------------------
-class LOD : public Spatial {
-    GODOT_CLASS(LOD, Node)
+//// Manager of all LOD objects ----------------------------------------------------------------------------------
+class LODManager : public Node {
+    GODOT_CLASS(LODManager, Node)
 
 private:
     float tickSpeed = 0.2f;
-    float timePassed = 0.0f;
 
+    // Array of arrays of LOD objects
+    Array LODObjectArrays;
+
+    Camera* camera;
+    float FOV; // Need FOV for getting screen percentages
+
+    ProjectSettings* projectSettings;
+
+    // Used to stop the management thread
+    bool managerRemoved = false;
+
+    // Flag to let LOD objects know to update their multipliers (if necessary)
+    bool updateMultsFlag = false;
+    // Flag to let LOD objects know to update their FOVs (AABB calculation for screen size based LOD)
+    bool updateFOVsFlag = false;
+    // Flag to let LOD objects know to update their AABB (use after settinf FOV if necessary)
+    bool updateAABBsFlag = false;
+
+    // Threading
+    Thread* LODLoopThread;
+    Semaphore* LODObjectsSemaphore;
+    Semaphore* managerRemovedSemaphore;
+
+    void mainLoop();
+
+public:
+    static void _register_methods();
+
+    LODManager();
+    ~LODManager();
+
+    void _init(); // our initializer called by Godot
+
+    void _ready();
+    void _exit_tree();
+
+    void addObject(Node* obj);
+    void removeObject(Node* obj);
+    
+    // Reading project settings is pretty expensive... set up to only update manually by default
+    // but we have the option to update every loop, too
+    bool updateMultsEveryLoop = false;
+    void updateLodMultipliersFromSettings();
+    void updateLodMultipliersInObjects(); // Tell LOD objects it's time to update
+    bool updateFOVEveryLoop = false;
+    void updateFOV(); // Need FOV for getting screen percentages
+    bool updateAABBEveryLoop = false;
+    void updateLodAABBs(); // Need AABB for getting screen percentages
+    void stopLoop(); // Stops the main thread
+
+    // Distance multipliers, available to access by other LOD objects
+    float globalDistMult = 1.0f;
+    float lod1DistMult = 1.0f;
+    float lod2DistMult = 1.0f;
+    float lod3DistMult = 1.0f;
+    float hideDistMult = 1.0f;
+    float unloadDistMult = 1.0f;
+    float shadowDistMult = 1.0f;
+};
+
+//// Object based LOD ----------------------------------------------------------------------------------
+class LOD : public VisualInstance {
+    GODOT_CLASS(LOD, VisualInstance)
+
+private:
+    float tickSpeed = 0.2f;
+
+    // Distance by metres
+    // These will be set by the ratios below if useScreenPercentage is true
     float lod1dist = 7.0f; // put any of these to -1 if you don't have a lod or don't want to unload etc
     float lod2dist = 12.0f;
     float lod3dist = 30.0f;
     float hideDist = 100.0f;
     float unloadDist = -1.0f;
 
-    bool disableProcessing = true;
+    // Distance by screen percentage
+    // Use a conservative/worst-case method for getting the size of the object
+    // relative to the screen (largest AABB axis on both viewport axes)
+    bool useScreenPercentage = true;
+    float lod1ratio = 25.0f;
+    float lod2ratio = 10.0f;
+    float lod3ratio = 5.5f;
+    float hideRatio = 1.0f;
+    float unloadRatio = -1.0f;
+
+    bool disableProcessing = false;
+
+    // Prevents calling the processData function too fast from the main loop
+    bool alreadyRunning = false;
+
+    // Keep track of last state to avoid unnecessary show/hide/process toggle calls
+    int lastState = -1;
 
     NodePath lod0path;
     NodePath lod1path;
     NodePath lod2path;
     NodePath lod3path;
 
-    Spatial* lod0 = NULL;
-    Spatial* lod1 = NULL;
+    Spatial* lod0 = NULL; // LOD0 MUST exist otherwise screen percentage breaks
+    Spatial* lod1 = NULL; // Plus it doesn't make sense for it not to exist
     Spatial* lod2 = NULL;
     Spatial* lod3 = NULL;
 
     Camera* camera;
+    float FOV; // Need FOV for getting screen percentages
+
+    // Let's use the AABB centre for the centre of the object instead of
+    // the parent's centre (if applicable). Instead of constantly 
+    // accessing AABB, just store an offset.
+    Vector3 transformOffsetAABB;
 
     ProjectSettings* projectSettings;
     bool affectedByDistanceMultipliers = true;
@@ -67,6 +166,8 @@ private:
     float hideDistMult = 1.0f;
     float unloadDistMult = 1.0f;
 
+    void setNodeProcessing(Spatial* node, bool state);
+
 public:
     static void _register_methods();
 
@@ -76,11 +177,12 @@ public:
     void _init(); // our initializer called by Godot
 
     void _ready();
-    void _process(float delta);
+    void _exit_tree();
+    void processData(Vector3 cameraLoc);
 
-    void setNodeProcessing(Spatial* node, bool state);
-
-    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
+    void updateLodMultipliersFromManager(); // Reading project settings is pretty expensive... only update manually
+    void updateLodAABB(); // Update AABB only if necessary
+    void updateFOV(); // Need FOV for getting screen percentages
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
@@ -89,23 +191,27 @@ class LightLOD : public Light {
 
 private:
     float tickSpeed = 0.5f;
-    float timePassed = 0.0f;
 
-    // Don't set these to stupid values because I won't be checking them
     float shadowDist = 20.0f;
     float hideDist = 80.0f; // -1 to never hide
     float fadeRange = 5.0f; // For ex, the intensity of the shadow will adjust from 0 to 1 between [shadowDist - fadeRange, shadowDist]
 
+    // Distance by screen percentage
+    // Use a conservative/worst-case method for getting the size of the object
+    // relative to the screen (largest AABB axis on both viewport axes)
+    bool useScreenPercentage = true;
+    float shadowRatio = 6.0f;
+    float hideRatio = 2.0f;
+
     float fadeSpeed = 2.0f;
-    Color white; // So we don't have to keep making a new Color... and for readability
 
     real_t lightBaseEnergy;
-    Color shadowBaseColor;
 
     real_t lightTargetEnergy;
     Color shadowTargetColor;
 
     Camera* camera;
+    float FOV; // Need FOV for getting screen percentages
 
     void fadeLight(float delta);
     void fadeShadow(float delta);
@@ -125,8 +231,12 @@ public:
 
     void _ready();
     void _process(float delta);
+    void _exit_tree();
+    void processData(Vector3 cameraLoc);
 
-    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
+    void updateLodMultipliersFromManager(); // Reading project settings is pretty expensive... we have the option to
+    void updateLodAABB(); // Update AABB only if necessary
+    void updateFOV(); // Need FOV for getting screen percentages
 };
 
 //// GIProbe LOD -------------------------------------------------------------------
@@ -135,11 +245,15 @@ class GIProbeLOD : public GIProbe  {
 
 private:
     float tickSpeed = 0.1f;
-    float timePassed = 0.0f;
 
-    // Don't set these to stupid values because I won't be checking them
     float hideDist = 80.0f;
     float fadeRange = 5.0f; // The energy of the probe will adjust from 0 to 1 between [unloadDist - fadeRange, unloadDist]
+
+    // Distance by screen percentage
+    // Use a conservative/worst-case method for getting the size of the object
+    // relative to the screen (largest AABB axis on both viewport axes)
+    bool useScreenPercentage = true;
+    float hideRatio = 2.0f;
 
     float fadeSpeed = 1.0f;
 
@@ -148,6 +262,7 @@ private:
     real_t probeBaseEnergy;
 
     Camera* camera;
+    float FOV; // Need FOV for getting screen percentages
 
     ProjectSettings* projectSettings;
     bool affectedByDistanceMultipliers = true;
@@ -163,8 +278,12 @@ public:
 
     void _ready();
     void _process(float delta);
+    void _exit_tree();
+    void processData(Vector3 cameraLoc);
 
-    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
+    void updateLodMultipliersFromManager(); // Reading project settings is pretty expensive... only update manually
+    void updateLodAABB(); // Update AABB only if necessary
+    void updateFOV(); // Need FOV for getting screen percentages
 };
 
 //// MultiMeshInstance LOD -------------------------------------------------------------------
@@ -173,11 +292,16 @@ class MultiMeshLOD : public MultiMeshInstance  {
 
 private:
     float tickSpeed = 0.5f;
-    float timePassed = 0.0f;
 
-    // Don't set these to stupid values because I won't be checking them
     float minDist = 5.0f; // At this distance, or below, we see max number of multimesh count
     float maxDist = 80.0f; // At this distance, or above, we see min (or none) number of multimesh count
+
+    // Distance by screen percentage
+    // Use a conservative/worst-case method for getting the size of the object
+    // relative to the screen (largest AABB axis on both viewport axes)
+    bool useScreenPercentage = true;
+    float minRatio = 2.0f;
+    float maxRatio = 5.0f;
 
     int64_t minCount = 0;
     int64_t maxCount = -1; // -1 means the number generated in the multimesh we find
@@ -188,6 +312,7 @@ private:
     float fadeExponent = 1.0f;  // Exponent of the [0, 1] curve that reduces count. At 1, we fade linearly.
 
     Camera* camera;
+    float FOV; // Need FOV for getting screen percentages
 
     ProjectSettings* projectSettings;
     bool affectedByDistanceMultipliers = true;
@@ -205,8 +330,12 @@ public:
 
     void _ready();
     void _process(float delta);
+    void _exit_tree();
+    void processData(Vector3 cameraLoc);
 
-    void updateLodMultipliers(); // Reading project settings is pretty expensive... only update manually
+    void updateLodMultipliersFromManager(); // Reading project settings is pretty expensive... only update manually
+    void updateLodAABB(); // Update AABB only if necessary
+    void updateFOV(); // Need FOV for getting screen percentages
 };
 
 }

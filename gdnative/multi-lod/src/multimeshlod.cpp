@@ -6,8 +6,23 @@ using namespace godot;
 void MultiMeshLOD::_register_methods() {
     register_method("_process", &MultiMeshLOD::_process);
     register_method("_ready", &MultiMeshLOD::_ready);
+    register_method("_exit_tree", &MultiMeshLOD::_exit_tree);
+    register_method("processData", &MultiMeshLOD::processData);
+
+    // Exposed methods
+    register_method("updateLodAABB", &MultiMeshLOD::updateLodAABB);
+    register_method("updateLodMultipliersFromManager", &MultiMeshLOD::updateLodMultipliersFromManager);
+
+    // Vars for distance-based (in metres)
+    // These will be set by the ratios if useScreenPercentage is true
     register_property<MultiMeshLOD, float>("minDist", &MultiMeshLOD::minDist, 5.0f); 
     register_property<MultiMeshLOD, float>("maxDist", &MultiMeshLOD::maxDist, 80.0f); 
+
+    // Screen percentage ratios (and if applicable)
+    register_property<MultiMeshLOD, bool>("useScreenPercentage", &MultiMeshLOD::useScreenPercentage, true);
+    register_property<MultiMeshLOD, float>("minRatio", &MultiMeshLOD::minRatio, 2.0f);
+    register_property<MultiMeshLOD, float>("maxRatio", &MultiMeshLOD::maxRatio, 5.0f);
+    register_property<MultiMeshLOD, float>("FOV", &MultiMeshLOD::FOV, 70.0f);
 
     // Whether to use distance multipliers from project settings
     register_property<MultiMeshLOD, bool>("affectedByDistanceMultipliers", &MultiMeshLOD::affectedByDistanceMultipliers, true);
@@ -31,52 +46,40 @@ MultiMeshLOD::~MultiMeshLOD() {
 void MultiMeshLOD::_init() {
 }
 
-void MultiMeshLOD::_ready() {
-    camera = get_viewport()->get_camera();
+void MultiMeshLOD::_exit_tree() {
+    // Leave LOD manager's list
+    get_node("/root/LodManager")->call("removeObject", (Node*) this);
+}
 
+void MultiMeshLOD::_ready() {
     multiMesh = *get_multimesh();
     if (maxCount < 0) {
         maxCount = multiMesh->get_instance_count();
     }
     targetCount = maxCount;
 
-    projectSettings = ProjectSettings::get_singleton();
-    updateLodMultipliers();
+    // Initial FOV setup
+    FOV = get_viewport()->get_camera()->get_fov();
+    if (useScreenPercentage) {
+        updateLodAABB();
+    }
+
+    // Tell the LOD manager that we want to be part of the LOD list
+    get_node("/root/LodManager")->call("addObject", (Node*) this);
 }
 
-void MultiMeshLOD::_process(float delta) {
-    timePassed += delta;
-
-    // Lerp visible instance count if needed
-    int64_t instanceCount = multiMesh->get_visible_instance_count();
-    if (instanceCount != targetCount) {
-        // -------- Actually, I don't think there's much of a benefit of disabling the object if none are visible?
-        // -------- Maybe just leave it for now.
-        // // If there were 0 instances, we need to re-enable the multimesh
-        // if (probeEnergy == 0.0) {
-        //     show();
-        // }
-
-        /// Lerp
-        instanceCount = int64_t(floor(instanceCount + (targetCount - instanceCount) * delta * fadeSpeed));
-        multiMesh->set_visible_instance_count(instanceCount);
-
-        // ------- See comment at beginning of if statement
-        // // If we just set it to 0, it means we turned it off
-        // if (instanceCount == 0) {
-        //     hide();
-        // }
-    }
-
-    // Don't have to check every frame
-    if (timePassed < tickSpeed) {
-        return;
-    } else {
-        timePassed = 0;
-    }
-
+void MultiMeshLOD::processData(Vector3 cameraLoc) {
+    // Double check for this node being in the scene tree
+    // (Otherwise you get errors when ending the thread)
     // Get the distance from the node to the camera
-    real_t distance = camera->get_global_transform().origin.distance_to(get_global_transform().origin);
+    Vector3 objLoc;
+    if (is_inside_tree()) {
+        objLoc = get_global_transform().origin;
+    } else {
+        return;
+    }
+
+    float distance = cameraLoc.distance_to(objLoc);
 
     // Get our target value
     // ((max - current) / (max - min))^fadeExponent will give us the ratio of where we want to set our values
@@ -84,13 +87,55 @@ void MultiMeshLOD::_process(float delta) {
     targetCount = int64_t(floor(pow(CLAMP((maxDist * globalDistMult - distance) / (maxDist * globalDistMult  - minDist * globalDistMult), 0.0, 1.0), fadeExponent) * (maxCount - minCount))) + minCount;
 }
 
-void MultiMeshLOD::updateLodMultipliers() {
-    if (affectedByDistanceMultipliers) {    
-        // In case the setting (plugin/patch) is missing, make sure multipliers aren't set to 0
-        float newGlobalDist = projectSettings->get_setting("rendering/quality/lod/global_multiplier");
-        if (newGlobalDist > 0.0) {
-            globalDistMult = newGlobalDist;    
+void MultiMeshLOD::_process(float delta) {
+    // Lerp visible instance count if needed
+    int64_t instanceCount = multiMesh->get_visible_instance_count();
+    if (instanceCount != targetCount) {
+        /// Lerp
+        // We normally floor the value, but in case of high FPS, our lerp might get stuck.
+        // Let's get the equation result first. Then, if the difference is positive and above 0.001,
+        // make sure we raise the count by at least 1.
+        float nextValue = CLAMP(instanceCount + (targetCount - instanceCount) * delta * fadeSpeed, 0.1f, maxCount);
+        int nextInstanceCount = int64_t(floor(nextValue));
+        if (nextValue - (float)instanceCount > 0.001f && instanceCount == nextInstanceCount) {
+            nextInstanceCount++;
         }
+        instanceCount = nextInstanceCount;
+        multiMesh->set_visible_instance_count(instanceCount);
+
+        if (instanceCount == 0 && is_visible()) {
+            hide();
+        } else if (instanceCount > 0 && !is_visible()) {
+            show();
+        }
+    }
+}
+
+// Update the distances based on the AABB
+void MultiMeshLOD::updateLodAABB() {
+    AABB objAABB = get_transformed_aabb();
+
+    if (objAABB.has_no_area()) {
+        printf("%s: ", get_name().alloc_c_string());
+        printf("Invalid AABB for this MultiMeshInstance!\n");
+        return;
+    }
+
+    // Get the longest axis (conservative estimate of the object size vs screen)
+    float longestAxis = objAABB.get_longest_axis_size();
+
+    // Use an isosceles triangle to get a worst-case estimate of the distances
+    float tanTheta = tan((FOV * 3.14f / 180.0f));
+
+    // Get the distances at which we have the LOD ratios of the screen
+    minDist = ((longestAxis / (maxRatio / 100.0f)) / (2.0f * tanTheta));
+    maxDist = ((longestAxis / (minRatio / 100.0f)) / (2.0f * tanTheta));
+}
+
+void MultiMeshLOD::updateLodMultipliersFromManager() {
+    if (affectedByDistanceMultipliers) {
+        Node* LODManagerNode = get_node("/root/LodManager");
+        globalDistMult = LODManagerNode->get("globalDistMult");
     } else {
         globalDistMult = 1.0f;
     }
