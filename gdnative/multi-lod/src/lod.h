@@ -20,6 +20,7 @@
 #include <Transform.hpp>
 #include <Spatial.hpp>
 #include <Vector3.hpp>
+#include <ctime>
 
 // Objects
 #include <NodePath.hpp>
@@ -70,6 +71,13 @@ private:
     Semaphore* managerRemovedSemaphore;
 
     void mainLoop();
+    void LODFunction();
+
+    // Variables used for the LOD function
+    clock_t last_run;
+    Vector3 cameraLoc;
+    Performance* perf;
+    float currentFPS = 0.0f;
 
 public:
     static void _register_methods();
@@ -80,6 +88,7 @@ public:
     void _init(); // our initializer called by Godot
 
     void _ready();
+    void _process(float delta);
     void _exit_tree();
 
     void addObject(Node* obj);
@@ -104,6 +113,9 @@ public:
     float hideDistMult = 1.0f;
     float unloadDistMult = 1.0f;
     float shadowDistMult = 1.0f;
+
+    // Whether to use multithreading or not
+    bool useMultithreading = true;
 };
 
 //// Object based LOD ----------------------------------------------------------------------------------

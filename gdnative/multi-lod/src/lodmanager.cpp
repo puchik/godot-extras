@@ -5,6 +5,7 @@
 using namespace godot;
 
 void LODManager::_register_methods() {
+    register_property<LODManager, bool>("useMultithreading", &LODManager::useMultithreading, true);
     // Exposed methods
     register_method("stopLoop", &LODManager::stopLoop);
     register_method("updateLodMultipliersFromSettings", &LODManager::updateLodMultipliersFromSettings);
@@ -13,6 +14,7 @@ void LODManager::_register_methods() {
     register_method("updateFOV", &LODManager::updateFOV);
 
     register_method("_ready", &LODManager::_ready);
+    register_method("_process", &LODManager::_process);
     register_method("_exit_tree", &LODManager::_exit_tree);
 
     // Thread function
@@ -52,7 +54,9 @@ void LODManager::_init() {
 
 void LODManager::_exit_tree() {
     // Stop loop thread if exiting
-    stopLoop();
+    if (useMultithreading) {
+        stopLoop();
+    }
 }
 
 
@@ -60,43 +64,51 @@ void LODManager::_ready() {
     camera = get_viewport()->get_camera();
 
     // Control threading with semaphore
-    // Do it before the update LOD mults and FOV call because it's used there
-    LODObjectsSemaphore = LODObjectsSemaphore->_new();
-    LODObjectsSemaphore->post();
+    if (useMultithreading) {
+        // Do it before the update LOD mults and FOV call because it's used there
+        LODObjectsSemaphore = LODObjectsSemaphore->_new();
+        LODObjectsSemaphore->post();
+    }
+
     updateFOV();
 
     projectSettings = ProjectSettings::get_singleton();
     updateLodMultipliersFromSettings();
+    // We'll be checking the FPS
+    perf = Performance::get_singleton();
+    last_run = clock();
 
     // Start main loop thread
-    LODLoopThread = LODLoopThread->_new();
-    LODLoopThread->start(this, "mainLoop");
+    if (useMultithreading) {
+        // Start thread
+        LODLoopThread = LODLoopThread->_new();
+        LODLoopThread->start(this, "mainLoop");
+    }
 }
 
-void LODManager::mainLoop() {
-    printf("Starting LOD thread function.\n");
-    clock_t last_run = clock();
-    Vector3 cameraLoc;
-    
-    // We'll be checking the FPS
-    Performance* perf = Performance::get_singleton();
-    float currentFPS = 0.0f;
+void LODManager::_process(float delta) {
+    if (!useMultithreading && !managerRemoved) {
+        LODFunction();
+    }
+}
 
-    while (!managerRemoved) {
+void LODManager::LODFunction() {
         currentFPS = perf->get_monitor(0); // gets the FPS
         // A bit hacky, but we'll check if the main thread is frozen/doing something heavy.
         // We don't need LOD when nothing is really moving nor do we want to potentially overload
         // the main thread with deferred calls.
         if (currentFPS < 7.0f) {
-            continue;
+            return;
         }
 
         // Could use OS.delay_msec, but loop may take a long time so keep track of time manually instead
         if ((double)(clock() - last_run) / CLOCKS_PER_SEC < tickSpeed) {
-            continue;
+            return;
         }
 
-        LODObjectsSemaphore->wait();
+        if (useMultithreading) {
+            LODObjectsSemaphore->wait();
+        }
 
         last_run = clock();
 
@@ -140,7 +152,9 @@ void LODManager::mainLoop() {
                 break;
             }
         }
-        LODObjectsSemaphore->post();
+        if (useMultithreading) {
+            LODObjectsSemaphore->post();
+        }
 
         if (updateMultsFlag) {
             updateMultsFlag = false;
@@ -164,9 +178,15 @@ void LODManager::mainLoop() {
         }
 
         if (managerRemoved) {
-            break;
+            return;
         }
+}
 
+void LODManager::mainLoop() {
+    printf("Starting LOD thread function.\n");
+
+    while (!managerRemoved) {
+        LODFunction();
     }
 
     printf("Finishing LOD thread function. LOD thread no longer running.\n");
@@ -188,7 +208,9 @@ void LODManager::stopLoop() {
 
 void LODManager::addObject(Node* obj) {
     // Go through array list to find one that has space
-    LODObjectsSemaphore->wait();
+    if (useMultithreading) {
+        LODObjectsSemaphore->wait();
+    }
 
     bool added = false; // Keep track in case we need to add a new list
     for (int i = 0; i < LODObjectArrays.size(); i++) {
@@ -206,7 +228,9 @@ void LODManager::addObject(Node* obj) {
         LODObjectArrays.push_back(newLODObjectArray);
     }
 
-    LODObjectsSemaphore->post();
+    if (useMultithreading) {
+        LODObjectsSemaphore->post();
+    }
 }
 
 void LODManager::removeObject(Node* obj) {
@@ -217,7 +241,9 @@ void LODManager::removeObject(Node* obj) {
         return;
     }
 
-    LODObjectsSemaphore->wait();
+    if (useMultithreading) {
+        LODObjectsSemaphore->wait();
+    }
 
     // Find which array has this object
     for (int i = 0; i < LODObjectArrays.size(); i++) {
@@ -229,7 +255,9 @@ void LODManager::removeObject(Node* obj) {
         }
     }
 
-    LODObjectsSemaphore->post();
+    if (useMultithreading) {
+        LODObjectsSemaphore->post();
+    }
 }
 
 
@@ -250,24 +278,36 @@ void LODManager::updateLodMultipliersFromSettings() {
 void LODManager::updateLodMultipliersInObjects() {
     // Enable the flag to update LOD multipliers in the thread loop
     // Make sure we're not partway through the loop
-    LODObjectsSemaphore->wait();
+    if (useMultithreading) {
+        LODObjectsSemaphore->wait();
+    }
     updateMultsFlag = true;
-    LODObjectsSemaphore->post();
+    if (useMultithreading) {
+        LODObjectsSemaphore->post();
+    }
 }
 
 void LODManager::updateFOV() {
     FOV = camera->get_fov();
     // Enable the flag to update FOV in the thread loop
     // Make sure we're not partway through the loop
-    LODObjectsSemaphore->wait();
+    if (useMultithreading) {
+        LODObjectsSemaphore->wait();
+    }
     updateFOVsFlag = true;
-    LODObjectsSemaphore->post();
+    if (useMultithreading) {
+        LODObjectsSemaphore->post();
+    }
 }
 
 void LODManager::updateLodAABBs() {
     // Enable the flag to update FOV in the thread loop
     // Make sure we're not partway through the loop
-    LODObjectsSemaphore->wait();
+    if (useMultithreading) {
+        LODObjectsSemaphore->wait();
+    }
     updateAABBsFlag = true;
-    LODObjectsSemaphore->post();
+    if (useMultithreading) {
+        LODObjectsSemaphore->post();
+    }
 }

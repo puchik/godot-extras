@@ -58,6 +58,7 @@ void GIProbeLOD::_ready() {
 
     // Tell the LOD manager that we want to be part of the LOD list
     get_node("/root/LodManager")->call("addObject", (Node*) this);
+    updateLodMultipliersFromManager();
 }
 
 void GIProbeLOD::processData(Vector3 cameraLoc) {

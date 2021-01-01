@@ -134,6 +134,7 @@ void LOD::_ready() {
 
     // Tell the LOD manager that we want to be part of the LOD list
     get_node("/root/LodManager")->call("addObject", (Node*) this);
+    updateLodMultipliersFromManager();
 }
 
 void LOD::processData(Vector3 cameraLoc) {

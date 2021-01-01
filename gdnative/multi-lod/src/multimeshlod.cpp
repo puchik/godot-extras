@@ -49,6 +49,7 @@ void MultiMeshLOD::_init() {
 void MultiMeshLOD::_exit_tree() {
     // Leave LOD manager's list
     get_node("/root/LodManager")->call("removeObject", (Node*) this);
+    updateLodMultipliersFromManager();
 }
 
 void MultiMeshLOD::_ready() {
