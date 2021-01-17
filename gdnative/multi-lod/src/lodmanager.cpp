@@ -1,11 +1,13 @@
 #include "lod.h"
 #include <string>
 #include <ctime>
+#define MAX_ARRAY_SIZE 30000
 
 using namespace godot;
 
 void LODManager::_register_methods() {
     register_property<LODManager, bool>("useMultithreading", &LODManager::useMultithreading, true);
+    register_property<LODManager, int>("objectsPerFrame", &LODManager::objectsPerFrame, 10000);
     // Exposed methods
     register_method("stopLoop", &LODManager::stopLoop);
     register_method("updateLodMultipliersFromSettings", &LODManager::updateLodMultipliersFromSettings);
@@ -116,10 +118,32 @@ void LODManager::LODFunction() {
             cameraLoc = camera->get_global_transform().origin;        
         }
 
+        // --------- TODO: Make a dynamic number of objects checked per frame --------------------
+        // Probably do a calculation here, use FPS
+        // Get next "chunk" of objects to check if not multithreaded
+        int nextLoopEndIndex;
+        if (!useMultithreading) {
+            nextLoopEndIndex = currentLoopIndex + 8000;
+        }
+
         // Go through all array lists
         for (int i = 0; i < LODObjectArrays.size(); i++) {
+            if (!useMultithreading && i == 0) {
+                i = CLAMP(floor((double)currentLoopIndex / (double)MAX_ARRAY_SIZE), 0, LODObjectArrays.size() - 1);
+            }
+            if (!useMultithreading && nextLoopEndIndex < i * MAX_ARRAY_SIZE) {
+                break;
+            }
+
             Array LODObjects = LODObjectArrays[i];
             for (int j = 0; j < LODObjects.size(); j++) {
+                if (!useMultithreading && j == 0) {
+                    j = CLAMP(currentLoopIndex - i * MAX_ARRAY_SIZE, 0, LODObjects.size() - 1);
+                }
+                if (!useMultithreading && nextLoopEndIndex < j + i * MAX_ARRAY_SIZE) {
+                    break;
+                }
+
                 // LOD thread might be still going through the list when LOD exits tree, check
                 if (managerRemoved) {
                     break;
@@ -154,6 +178,14 @@ void LODManager::LODFunction() {
         }
         if (useMultithreading) {
             LODObjectsSemaphore->post();
+        }
+
+        if (!useMultithreading) {
+            if (nextLoopEndIndex >= LODObjectCount) {
+                currentLoopIndex = 0;
+            } else {
+                currentLoopIndex = nextLoopEndIndex;
+            }
         }
 
         if (updateMultsFlag) {
@@ -215,8 +247,9 @@ void LODManager::addObject(Node* obj) {
     bool added = false; // Keep track in case we need to add a new list
     for (int i = 0; i < LODObjectArrays.size(); i++) {
         Array LODObjects = LODObjectArrays[i];
-        if (LODObjects.size() < 30000) {
+        if (LODObjects.size() < MAX_ARRAY_SIZE) {
             LODObjects.push_back(obj);
+            LODObjectCount++;
             added = true;
             break;
         }
@@ -251,6 +284,7 @@ void LODManager::removeObject(Node* obj) {
         int index = LODObjects.find(obj);
         if (index > -1) {
             LODObjects.remove(index);
+            LODObjectCount--;
             break;
         }
     }

@@ -114,8 +114,13 @@ public:
     float unloadDistMult = 1.0f;
     float shadowDistMult = 1.0f;
 
+    int LODObjectCount = 0;
     // Whether to use multithreading or not
     bool useMultithreading = true;
+    // If we're not using a thread, looping through all objects at once can cause stutters.
+    // So let's break the objects looped into separate frames
+    int currentLoopIndex = 0;
+    int objectsPerFrame = 10000;
 };
 
 //// Object based LOD ----------------------------------------------------------------------------------
