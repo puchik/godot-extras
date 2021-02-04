@@ -8,9 +8,14 @@
 
 config_version=4
 
+_global_script_classes=[  ]
+_global_script_class_icons={
+
+}
+
 [application]
 
-config/name="TestProject"
+config/name="MultiLOD Test Project"
 run/main_scene="res://TestScene.tscn"
 config/icon="res://icon.png"
 

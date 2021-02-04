@@ -4,6 +4,7 @@ This is a collection of LOD systems for various built-in Godot types.
 More detailed write-up available here:
 [First write-up](https://puchik.now.sh/posts/lod/).
 [Second, newest write-up](https://puchik.now.sh/posts/multithreaded-lod/).
+[Video](https://www.youtube.com/watch?v=4xWTnD7X1jU)
 
 For all the sytems, there is a tick speed that specifies how often the distances should be checked. Also, setting any distance to -1 will disable a detail level (e.g. don't use
 LOD1, never fade out shadows, etc.)
