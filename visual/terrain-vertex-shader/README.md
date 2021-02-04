@@ -6,12 +6,18 @@ The original idea was to use this with terrains, but it's really just a vertex c
 
 [Video 1](https://youtu.be/4e_iv0hZssM) and [Video 2](https://youtu.be/C9tCCJoFKZU)
 
-**Usage**
+**Usage:**
+
 Make a ShaderMaterial, define the .shader file as its shader, and set up the parameters as you wish.
+
+Materials mix using either a splat map or vertex colours. They are represented by red, blue, green, and black.
+
+Height maps can be used in grayscale. The alpha channel is used for holes in the terrain.
 
 If you want to paint vertex colours within Godot, you can use [VPainter](https://github.com/tomankirilov/VPainter).
 
-**Parameters**
+**Parameters:**
+
 Keep in mind images appear at the end of the ShaderMaterial settings (as of 2021/01/31) despite the order in the shader variables, so the texture slots may look out of place.
 
 You have 4 texture sets/materials you can blend. They come with the "main" features of the SpatialMaterial such normal maps, roughness, etc.
@@ -32,7 +38,7 @@ NOTE: You need to provide a noise texture for anti-tiling to work correctly. The
 
 * Splat maps can be used to blend materials instead of vertex colours.
 
-**Limitations**
+**Limitations:**
 
 In some cases, the anti-tiling might cause the appearance of lines across the surface of the mesh.
 
@@ -41,7 +47,7 @@ However, you can combine your metallic, roughness, and occlusion textures and us
 
 Performance is good, but there is room for improvement.
 
-**Other**
+**Other:**
 
 The project contains a water shader available on the AssetLib which was created by Maujoe.
 
