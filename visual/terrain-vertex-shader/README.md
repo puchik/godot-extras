@@ -4,7 +4,7 @@ in the terrain), splat maps (instead of vertex colours), distance culling (defin
 
 The original idea was to use this with terrains, but it's really just a vertex colour shader! Use it to add details to your models such as rust on metal or puddles on the ground.
 
-[Video](https://youtu.be/4e_iv0hZssM)
+[Video 1](https://youtu.be/4e_iv0hZssM) and [Video 2](https://youtu.be/C9tCCJoFKZU)
 
 **Usage**
 Make a ShaderMaterial, define the .shader file as its shader, and set up the parameters as you wish.
