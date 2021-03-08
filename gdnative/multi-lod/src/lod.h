@@ -10,6 +10,7 @@
 #include <SceneTree.hpp>
 #include <AABB.hpp>
 #include <Thread.hpp>
+#include <Ref.hpp>
 #include <OS.hpp>
 #include <Mutex.hpp>
 #include <Semaphore.hpp>
@@ -66,9 +67,9 @@ private:
     bool updateAABBsFlag = false;
 
     // Threading
-    Thread* LODLoopThread;
-    Semaphore* LODObjectsSemaphore;
-    Semaphore* managerRemovedSemaphore;
+    Ref<Thread> LODLoopThread;
+    Ref<Semaphore> LODObjectsSemaphore;
+    Ref<Semaphore> managerRemovedSemaphore;
 
     void mainLoop();
     void LODFunction();

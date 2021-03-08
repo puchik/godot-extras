@@ -48,10 +48,6 @@ Alternatively, the source C++ files are also in this directory. You'll need them
 
 If you have many objects, your message queue will overflow. You will need to increase its size in project settings.
 
-I have put print statements for the beginning and the ending of a thread. I have also tested the lifecycle of the thread and tried doing a very simple threaded application in Godot that is identical to its gdscript equivalent in the threading guide. Yet, when the thread ends, Godot throws an error about losing reference to thread while it is running. I have even looked at the source code and am not quite sure what is going on. I am moderately convinced this is a Godot bug, but I have yet to report it on GitHub. Functionality does not seem to be affected. I think it may have something to do with [this](https://github.com/godotengine/godot/issues/7235) issue.
-
-If you experience problems, download and use the previous commit/first version for now and let me know.
-
 **Known bugs:**
 
 You tell me :)

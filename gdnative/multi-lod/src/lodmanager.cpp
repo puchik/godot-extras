@@ -68,7 +68,7 @@ void LODManager::_ready() {
     // Control threading with semaphore
     if (useMultithreading) {
         // Do it before the update LOD mults and FOV call because it's used there
-        LODObjectsSemaphore = LODObjectsSemaphore->_new();
+        LODObjectsSemaphore = (Ref<Semaphore>) Semaphore::_new();
         LODObjectsSemaphore->post();
     }
 
@@ -83,7 +83,7 @@ void LODManager::_ready() {
     // Start main loop thread
     if (useMultithreading) {
         // Start thread
-        LODLoopThread = LODLoopThread->_new();
+        LODLoopThread = (Ref<Thread>) Thread::_new();
         LODLoopThread->start(this, "mainLoop");
     }
 }
@@ -129,7 +129,7 @@ void LODManager::LODFunction() {
         // Go through all array lists
         for (int i = 0; i < LODObjectArrays.size(); i++) {
             if (!useMultithreading && i == 0) {
-                i = CLAMP(floor((double)currentLoopIndex / (double)MAX_ARRAY_SIZE), 0, LODObjectArrays.size() - 1);
+                i = CLAMP((int)floor((double)currentLoopIndex / (double)MAX_ARRAY_SIZE), 0, LODObjectArrays.size() - 1);
             }
             if (!useMultithreading && nextLoopEndIndex < i * MAX_ARRAY_SIZE) {
                 break;
@@ -215,13 +215,9 @@ void LODManager::LODFunction() {
 }
 
 void LODManager::mainLoop() {
-    printf("Starting LOD thread function.\n");
-
     while (!managerRemoved) {
         LODFunction();
     }
-
-    printf("Finishing LOD thread function. LOD thread no longer running.\n");
 }
 
 void LODManager::stopLoop() {
