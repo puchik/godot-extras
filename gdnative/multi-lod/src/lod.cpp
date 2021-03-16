@@ -6,6 +6,7 @@ using namespace godot;
 
 void LOD::_register_methods() {
     // Godot and thread functions
+    register_method("_process", &LOD::_process);
     register_method("_ready", &LOD::_ready);
     register_method("_exit_tree", &LOD::_exit_tree);
     register_method("processData", &LOD::processData);
@@ -55,7 +56,8 @@ void LOD::_init() {
 
 void LOD::_exit_tree() {
     // Leave LOD manager's list
-    get_node("/root/LodManager")->call("removeObject", (Node*) this);
+    enabled = false;
+    attemptRegister(false);
 }
 
 void LOD::_ready() {
@@ -126,15 +128,10 @@ void LOD::_ready() {
         }
     }
 
-    // Initial FOV setup
-    FOV = get_viewport()->get_camera()->get_fov();
-    if (useScreenPercentage) {
-        updateLodAABB();
-    }
+    // FOV and AABB initial set up is done by the manager
 
     // Tell the LOD manager that we want to be part of the LOD list
-    get_node("/root/LodManager")->call("addObject", (Node*) this);
-    updateLodMultipliersFromManager();
+    attemptRegister(true);
 }
 
 void LOD::processData(Vector3 cameraLoc) {
@@ -295,6 +292,13 @@ void LOD::processData(Vector3 cameraLoc) {
     }
 }
 
+void LOD::_process(float delta) {
+    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
+    if (!registered && enabled) {
+        attemptRegister(true);
+    }
+}
+
 void LOD::setNodeProcessing(Spatial* node, bool state) {
     node->set_physics_process(state);
     node->set_process(state);
@@ -310,14 +314,14 @@ void LOD::updateLodAABB() {
     // Check for at least LOD0
     if (!lod0) {
         printf("%s: ", get_name().alloc_c_string());
-        printf("You need to have a valid LOD0 for screen percentage based LOD.\n");
+        printf("\nYou need to have a valid LOD0 for screen percentage based LOD.\n");
     }
 
     // Try casting the LOD objects to VisualInstance (that's the only way we can get an AABB!)
     VisualInstance *lod0VisInst = Object::cast_to<VisualInstance>(lod0);
     if (!lod0VisInst) {
         printf("%s: ", get_name().alloc_c_string());
-        printf("LOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)\n");
+        printf("\nLOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)\n");
     }
 
     // Get base AABB using LOD0
@@ -325,7 +329,7 @@ void LOD::updateLodAABB() {
 
     if (objAABB.has_no_area()) {
         printf("%s: ", get_name().alloc_c_string());
-        printf("Invalid AABB for LOD0!\n");
+        printf("\nInvalid AABB for LOD0!\n");
         return;
     }
 
@@ -383,4 +387,20 @@ void LOD::updateLodMultipliersFromManager() {
         hideDistMult = 1.0f;
         unloadDistMult = 1.0f;
     }
+}
+
+bool LOD::attemptRegister(bool state) {
+    if (get_node("/root/LodManager")) {
+        if (state) {
+            get_node("/root/LodManager")->call("addObject", (Node*) this);
+            updateLodMultipliersFromManager();
+            registered = true;
+        } else {
+            get_node("/root/LodManager")->call("removeObject", (Node*) this);
+            registered = false;
+            interactedWithManager = false;
+        }
+        return true;
+    }
+    return false;
 }

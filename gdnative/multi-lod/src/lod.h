@@ -51,7 +51,7 @@ private:
     // Array of arrays of LOD objects
     Array LODObjectArrays;
 
-    Camera* camera;
+    Camera* camera = NULL;
     float FOV; // Need FOV for getting screen percentages
 
     ProjectSettings* projectSettings;
@@ -100,6 +100,7 @@ public:
     bool updateMultsEveryLoop = false;
     void updateLodMultipliersFromSettings();
     void updateLodMultipliersInObjects(); // Tell LOD objects it's time to update
+    bool setUpCamera();
     bool updateFOVEveryLoop = false;
     void updateFOV(); // Need FOV for getting screen percentages
     bool updateAABBEveryLoop = false;
@@ -130,6 +131,11 @@ class LOD : public VisualInstance {
 
 private:
     float tickSpeed = 0.2f;
+    bool enabled = true; // Switch to false if we want to turn off LOD functionality
+    bool registered = false; // Whether the manager knows we exist
+    bool attemptRegister(bool state); // Register or unregister the object. Returns success or fail
+    // Dirty bit. Indicates if the LOD manager has had any contact with this object
+    bool interactedWithManager = false;
 
     // Distance by metres
     // These will be set by the ratios below if useScreenPercentage is true
@@ -167,7 +173,6 @@ private:
     Spatial* lod2 = NULL;
     Spatial* lod3 = NULL;
 
-    Camera* camera;
     float FOV; // Need FOV for getting screen percentages
 
     // Let's use the AABB centre for the centre of the object instead of
@@ -195,6 +200,7 @@ public:
     void _init(); // our initializer called by Godot
 
     void _ready();
+    void _process(float delta);
     void _exit_tree();
     void processData(Vector3 cameraLoc);
 
@@ -209,6 +215,11 @@ class LightLOD : public Light {
 
 private:
     float tickSpeed = 0.5f;
+    bool enabled = true; // Switch to false if we want to turn off LOD functionality
+    bool registered = false; // Whether the manager knows we exist
+    bool attemptRegister(bool state); // Register or unregister the object. Returns success or fail
+    // Dirty bit. Indicates if the LOD manager has had any contact with this object
+    bool interactedWithManager = false;
 
     float shadowDist = 20.0f;
     float hideDist = 80.0f; // -1 to never hide
@@ -228,7 +239,6 @@ private:
     real_t lightTargetEnergy;
     Color shadowTargetColor;
 
-    Camera* camera;
     float FOV; // Need FOV for getting screen percentages
 
     void fadeLight(float delta);
@@ -263,6 +273,11 @@ class GIProbeLOD : public GIProbe  {
 
 private:
     float tickSpeed = 0.1f;
+    bool enabled = true; // Switch to false if we want to turn off LOD functionality
+    bool registered = false; // Whether the manager knows we exist
+    bool attemptRegister(bool state); // Register or unregister the object. Returns success or fail
+    // Dirty bit. Indicates if the LOD manager has had any contact with this object
+    bool interactedWithManager = false;
 
     float hideDist = 80.0f;
     float fadeRange = 5.0f; // The energy of the probe will adjust from 0 to 1 between [unloadDist - fadeRange, unloadDist]
@@ -279,7 +294,6 @@ private:
 
     real_t probeBaseEnergy;
 
-    Camera* camera;
     float FOV; // Need FOV for getting screen percentages
 
     ProjectSettings* projectSettings;
@@ -310,6 +324,11 @@ class MultiMeshLOD : public MultiMeshInstance  {
 
 private:
     float tickSpeed = 0.5f;
+    bool enabled = true; // Switch to false if we want to turn off LOD functionality
+    bool registered = false; // Whether the manager knows we exist
+    bool attemptRegister(bool state); // Register or unregister the object. Returns success or fail
+    // Dirty bit. Indicates if the LOD manager has had any contact with this object
+    bool interactedWithManager = false;
 
     float minDist = 5.0f; // At this distance, or below, we see max number of multimesh count
     float maxDist = 80.0f; // At this distance, or above, we see min (or none) number of multimesh count
@@ -329,7 +348,6 @@ private:
     float fadeSpeed = 1.0f;
     float fadeExponent = 1.0f;  // Exponent of the [0, 1] curve that reduces count. At 1, we fade linearly.
 
-    Camera* camera;
     float FOV; // Need FOV for getting screen percentages
 
     ProjectSettings* projectSettings;

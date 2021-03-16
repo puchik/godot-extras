@@ -42,7 +42,7 @@ void GIProbeLOD::_init() {
 
 void GIProbeLOD::_exit_tree() {
     // Leave LOD manager's list
-    get_node("/root/LodManager")->call("removeObject", (Node*) this);
+    attemptRegister(false);
 }
 
 void GIProbeLOD::_ready() {
@@ -50,15 +50,10 @@ void GIProbeLOD::_ready() {
     probeBaseEnergy = get_energy();
     probeTargetEnergy = probeBaseEnergy;
 
-    // Initial FOV setup
-    FOV = get_viewport()->get_camera()->get_fov();
-    if (useScreenPercentage) {
-        updateLodAABB();
-    }
+    // FOV and AABB initial set up is done by the manager
 
     // Tell the LOD manager that we want to be part of the LOD list
-    get_node("/root/LodManager")->call("addObject", (Node*) this);
-    updateLodMultipliersFromManager();
+    attemptRegister(true);
 }
 
 void GIProbeLOD::processData(Vector3 cameraLoc) {
@@ -81,6 +76,11 @@ void GIProbeLOD::processData(Vector3 cameraLoc) {
 }
 
 void GIProbeLOD::_process(float delta) {
+    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
+    if (!registered && enabled) {
+        attemptRegister(true);
+    }
+
     // Fade GIProbe if needed
     real_t probeEnergy = get_energy();
     if (probeEnergy != probeTargetEnergy) {
@@ -125,4 +125,20 @@ void GIProbeLOD::updateLodMultipliersFromManager() {
     } else {
         globalDistMult = 1.0f;
     }
+}
+
+bool GIProbeLOD::attemptRegister(bool state) {
+    if (get_node("/root/LodManager")) {
+        if (state) {
+            get_node("/root/LodManager")->call("addObject", (Node*) this);
+            updateLodMultipliersFromManager();
+            registered = true;
+        } else {
+            get_node("/root/LodManager")->call("removeObject", (Node*) this);
+            registered = false;
+            interactedWithManager = false;
+        }
+        return true;
+    }
+    return false;
 }

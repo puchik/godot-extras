@@ -63,8 +63,6 @@ void LODManager::_exit_tree() {
 
 
 void LODManager::_ready() {
-    camera = get_viewport()->get_camera();
-
     // Control threading with semaphore
     if (useMultithreading) {
         // Do it before the update LOD mults and FOV call because it's used there
@@ -72,7 +70,7 @@ void LODManager::_ready() {
         LODObjectsSemaphore->post();
     }
 
-    updateFOV();
+    setUpCamera();
 
     projectSettings = ProjectSettings::get_singleton();
     updateLodMultipliersFromSettings();
@@ -89,6 +87,9 @@ void LODManager::_ready() {
 }
 
 void LODManager::_process(float delta) {
+    if (!camera) {
+        setUpCamera();
+    }
     if (!useMultithreading && !managerRemoved) {
         LODFunction();
     }
@@ -108,15 +109,18 @@ void LODManager::LODFunction() {
             return;
         }
 
+        if (camera && camera->is_inside_tree()) {
+            cameraLoc = camera->get_global_transform().origin;        
+        } else {
+            // printf("Camera used by the LOD Manager is not in the scene tree\n");
+            return;
+        }
+
         if (useMultithreading) {
             LODObjectsSemaphore->wait();
         }
 
         last_run = clock();
-
-        if (camera->is_inside_tree()) {
-            cameraLoc = camera->get_global_transform().origin;        
-        }
 
         // --------- TODO: Make a dynamic number of objects checked per frame --------------------
         // Probably do a calculation here, use FPS
@@ -158,12 +162,14 @@ void LODManager::LODFunction() {
                         // Tell it to update. It will fetch the distances from our public values
                         LODObjectNode->call("updateLodMultipliersFromManager");
                     }
+                    // If we are seeing it for the first time, give it our FOV and update its AABBs
+                    bool interactedWithManager = LODObjectNode->get("interactedWithManager");
                     // Update FOV if needed
-                    if (updateFOVsFlag && LODObjectNode->get("FOV")) {
+                    if ((updateFOVsFlag || !interactedWithManager) && LODObjectNode->get("FOV")) {
                         LODObjectNode->set("FOV", FOV);
                     }
                     // Update AABB if needed
-                    if (updateAABBsFlag && LODObjectNode->get("useScreenPercentage")) {
+                    if ((updateFOVsFlag || !interactedWithManager) && LODObjectNode->get("useScreenPercentage")) {
                         LODObjectNode->call("updateLodAABB");
                     }
                     // Pass camera location and do calculations on LOD object
@@ -207,10 +213,6 @@ void LODManager::LODFunction() {
         }
         if (updateAABBEveryLoop) {
             updateLodAABBs();
-        }
-
-        if (managerRemoved) {
-            return;
         }
 }
 
@@ -340,4 +342,13 @@ void LODManager::updateLodAABBs() {
     if (useMultithreading) {
         LODObjectsSemaphore->post();
     }
+}
+
+bool LODManager::setUpCamera() {
+    if (get_viewport()->get_camera()) {
+        camera = get_viewport()->get_camera();
+        updateFOV();
+        return true;
+    }
+    return false;
 }
