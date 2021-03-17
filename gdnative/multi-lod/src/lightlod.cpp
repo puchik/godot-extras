@@ -23,6 +23,7 @@ void LightLOD::_register_methods() {
     register_property<LightLOD, float>("shadowRatio", &LightLOD::shadowRatio, 6.0f);
     register_property<LightLOD, float>("hideRatio", &LightLOD::hideRatio, 2.0f);
     register_property<LightLOD, float>("FOV", &LightLOD::FOV, 70.0f);
+    register_property<LightLOD, bool>("interactedWithManager", &LightLOD::interactedWithManager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
     register_property<LightLOD, bool>("affectedByDistanceMultipliers", &LightLOD::affectedByDistanceMultipliers, true);
@@ -94,11 +95,12 @@ void LightLOD::_process(float delta) {
         attemptRegister(true);
     }
 
-    // Fade light
-    fadeLight(delta);
-
-    // Fade shadows
-    fadeShadow(delta);
+    if (registered && enabled) {
+        // Fade light
+        fadeLight(delta);
+        // Fade shadows
+        fadeShadow(delta);
+    }
 }
 
 void LightLOD::fadeLight(float delta) {

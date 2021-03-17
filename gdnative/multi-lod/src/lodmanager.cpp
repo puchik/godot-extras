@@ -165,12 +165,15 @@ void LODManager::LODFunction() {
                     // If we are seeing it for the first time, give it our FOV and update its AABBs
                     bool interactedWithManager = LODObjectNode->get("interactedWithManager");
                     // Update FOV if needed
-                    if ((updateFOVsFlag || !interactedWithManager) && LODObjectNode->get("FOV")) {
+                    if ((updateFOVsFlag || !interactedWithManager)) {
                         LODObjectNode->set("FOV", FOV);
                     }
                     // Update AABB if needed
-                    if ((updateFOVsFlag || !interactedWithManager) && LODObjectNode->get("useScreenPercentage")) {
+                    if ((updateAABBsFlag || !interactedWithManager) && LODObjectNode->get("useScreenPercentage")) {
                         LODObjectNode->call("updateLodAABB");
+                    }
+                    if (!interactedWithManager) {
+                        LODObjectNode->set("interactedWithManager", true);
                     }
                     // Pass camera location and do calculations on LOD object
                     if (LODObjectNode->has_method("processData")) {
@@ -320,6 +323,10 @@ void LODManager::updateLodMultipliersInObjects() {
 }
 
 void LODManager::updateFOV() {
+    if (!camera) {
+        // No camera to get FOV from
+        return;
+    }
     FOV = camera->get_fov();
     // Enable the flag to update FOV in the thread loop
     // Make sure we're not partway through the loop

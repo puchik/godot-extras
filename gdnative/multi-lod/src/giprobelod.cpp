@@ -21,6 +21,7 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, bool>("useScreenPercentage", &GIProbeLOD::useScreenPercentage, true);
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hideRatio, 2.0f);
     register_property<GIProbeLOD, float>("FOV", &GIProbeLOD::FOV, 70.0f);
+    register_property<GIProbeLOD, bool>("interactedWithManager", &GIProbeLOD::interactedWithManager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
     register_property<GIProbeLOD, bool>("affectedByDistanceMultipliers", &GIProbeLOD::affectedByDistanceMultipliers, true);
@@ -83,7 +84,7 @@ void GIProbeLOD::_process(float delta) {
 
     // Fade GIProbe if needed
     real_t probeEnergy = get_energy();
-    if (probeEnergy != probeTargetEnergy) {
+    if (registered && enabled && probeEnergy != probeTargetEnergy) {
         /// Lerp
         // If the probe energy wasn't 1, then the fade might be slower or faster
         // We don't want the speed to be dependent on energy, so multiply speed by base

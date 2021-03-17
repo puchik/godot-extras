@@ -23,6 +23,7 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, float>("minRatio", &MultiMeshLOD::minRatio, 2.0f);
     register_property<MultiMeshLOD, float>("maxRatio", &MultiMeshLOD::maxRatio, 5.0f);
     register_property<MultiMeshLOD, float>("FOV", &MultiMeshLOD::FOV, 70.0f);
+    register_property<MultiMeshLOD, bool>("interactedWithManager", &MultiMeshLOD::interactedWithManager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
     register_property<MultiMeshLOD, bool>("affectedByDistanceMultipliers", &MultiMeshLOD::affectedByDistanceMultipliers, true);

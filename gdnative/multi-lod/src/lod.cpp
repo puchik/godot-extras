@@ -29,6 +29,7 @@ void LOD::_register_methods() {
     register_property<LOD, float>("hideRatio", &LOD::hideRatio, 1.0f);
     register_property<LOD, float>("unloadRatio", &LOD::unloadRatio, -1.0f);
     register_property<LOD, float>("FOV", &LOD::FOV, 70.0f);
+    register_property<LOD, bool>("interactedWithManager", &LOD::interactedWithManager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     
     // Whether to use distance multipliers from project settings
     register_property<LOD, bool>("affectedByDistanceMultipliers", &LOD::affectedByDistanceMultipliers, true);
