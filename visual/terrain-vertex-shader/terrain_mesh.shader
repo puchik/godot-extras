@@ -145,10 +145,8 @@ varying float dist;
 //// Culling
 uniform bool distance_culling = false;
 // Range where this is visible
-uniform float cull_min_dist = 100.0;
-uniform float cull_max_dist = 300.0;
-// Margin for fading out
-uniform float cull_fade_margin = 20.0;
+uniform float cull_min_dist = 0.0;
+uniform float cull_max_dist = 100.0;
 
 //// Anti-tiling
 uniform bool prevent_tiling;
@@ -178,11 +176,6 @@ uniform float height_map_scale = 1.0;
 uniform bool use_splat_map = false;
 uniform sampler2D splat_map : hint_white;
 
-// TODO: Replace this with a texture lookup, or replace texture lookup with this?
-float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-}
-
 void vertex() {
 	UV=UV*uv1_scale.xy+uv1_offset.xy;
 	
@@ -203,19 +196,8 @@ void vertex() {
 	dist = sqrt(z_dist * z_dist + x_dist * x_dist);
 
 	if (distance_culling) {
-		float num = 1000.0 / dist;
-		
-		// Object will not be visible between min and max dist
-		float fade_ratio = 0.0;
-		
-		if (dist > cull_max_dist - cull_fade_margin) {
-			fade_ratio = clamp((dist - (cull_max_dist - cull_fade_margin)) / cull_fade_margin, 0.0, 1.0);
-		} else if (dist < cull_min_dist + cull_fade_margin) {
-			fade_ratio = 1.0 - clamp((dist - cull_min_dist) / cull_fade_margin, 0.0, 1.0);
-		}
-		
 		// Cull anything inside the cull range or behind us
-		if (rand(vec2(VERTEX.x, VERTEX.y)) > fade_ratio || z_dist < 0.0) {
+		if (dist > cull_max_dist ||dist < cull_min_dist || z_dist < 0.0) {
 			VERTEX = vec3(1.0 / 0.0);
 		}
 	}

@@ -45,7 +45,7 @@ In some cases, the anti-tiling might cause the appearance of lines across the su
 Due to texture quantity limits, metallic and ambient occlusion textures are not present by default. 
 However, you can combine your metallic, roughness, and occlusion textures and use a single texture slot. See comments inside the shader for further explanation.
 
-Performance is good, but there is room for improvement.
+Performance could be better. Many texture lookups.
 
 **Other:**
 
