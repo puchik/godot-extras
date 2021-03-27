@@ -44,6 +44,26 @@ For Windows, this is already set up.
 
 Alternatively, the source C++ files are also in this directory. You'll need them to compile for different platforms + any changes you'd like + see the internals.
 
+**FAQ**
+* Nothing is happening!
+
+Make sure the LODManager has the correct reference to the camera. It will try to find a camera if it doesn't have one, but
+if the camera is changed or no longer exits you will have to manually call `setUpCamera` or `setCamera(your_camera_node)`.
+
+* The node LOD is crashing when I start up my game.
+
+There are multiple reasons this may happen and some will throw an error message. For one, you need to have at least a LOD0
+node. Another thing you can do is check if you've changed any of the defaults to broken values. 
+
+* I get crashes with or without any nodes. Only the manager is present.
+
+Try running the scene with multithreading disabled on the LODManager (in the LodManager scene in your addons folder). This
+way you may also get an error message (since Godot doesn't currently (27-03-2021) support multithreaded debugging...)
+
+* Anything else?
+
+Make an issue with your problem, expected behaviour, and, if applicable, some images. A small reproduction project is appreciated. I'd be glad to take a look.
+
 **Limitations**
 
 If you have many objects, your message queue will overflow. You will need to increase its size in project settings.

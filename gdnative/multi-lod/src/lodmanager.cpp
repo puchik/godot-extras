@@ -14,6 +14,8 @@ void LODManager::_register_methods() {
     register_method("updateLodMultipliersInObjects", &LODManager::updateLodMultipliersInObjects);
     register_method("updateLodAABBs", &LODManager::updateLodAABBs);
     register_method("updateFOV", &LODManager::updateFOV);
+    register_method("setUpCamera", &LODManager::setUpCamera);
+    register_method("setCamera", &LODManager::setCamera);
 
     register_method("_ready", &LODManager::_ready);
     register_method("_process", &LODManager::_process);
@@ -358,4 +360,16 @@ bool LODManager::setUpCamera() {
         return true;
     }
     return false;
+}
+
+bool LODManager::setCamera(Node* givenNode) {
+    Camera* cameraNode;
+    cameraNode = Object::cast_to<Camera>(givenNode);
+    if (cameraNode) {
+        camera = cameraNode;
+        return true;
+    } else {
+        printf("Camera provided in setCamera of LODManager was not valid.\n");
+        return false;
+    }
 }

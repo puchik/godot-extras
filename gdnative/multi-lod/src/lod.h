@@ -101,6 +101,7 @@ public:
     void updateLodMultipliersFromSettings();
     void updateLodMultipliersInObjects(); // Tell LOD objects it's time to update
     bool setUpCamera();
+    bool setCamera(Node* givenNode);
     bool updateFOVEveryLoop = false;
     void updateFOV(); // Need FOV for getting screen percentages
     bool updateAABBEveryLoop = false;
