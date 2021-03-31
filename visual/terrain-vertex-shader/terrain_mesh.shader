@@ -305,7 +305,7 @@ vec2 calc_deep_parallax(vec3 view_dir, vec2 texture_UV, sampler2D texture_depth,
 	float layer_depth = 1.0 / num_layers;
 	float current_layer_depth = 0.0;
 	
-	vec2 P = view_dir.xy * depth_scale;
+	vec2 P = view_dir.xy / view_dir.z * depth_scale;
 	vec2 delta = P / num_layers;
 	
 	vec2 ofs = texture_UV;

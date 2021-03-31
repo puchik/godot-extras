@@ -10,11 +10,13 @@ The original idea was to use this with terrains, but it's really just a vertex c
 
 Make a ShaderMaterial, define the .shader file as its shader, and set up the parameters as you wish.
 
-Materials mix using either a splat map or vertex colours. They are represented by red, blue, green, and black.
+Materials mix using either a splat map or vertex colours. They are represented by _red, blue, green, and black_.
 
 Height maps can be used in grayscale. The alpha channel is used for holes in the terrain.
 
 If you want to paint vertex colours within Godot, you can use [VPainter](https://github.com/tomankirilov/VPainter).
+
+In most cases you probably want to use this shader as a base for another and remove parts you don't need (or add/modify parts of it). Removing features you don't need may help performance and will declutter your material(s).
 
 **Parameters:**
 
@@ -25,7 +27,7 @@ You can adjust these parameters as usual (although some of the min/max ranges ar
 
 Under those, you'll find other settings:
 
-* Enabling Distance Culling will make the object vertices disappear between Min Dist and Max Dist (e.g. object is invisible between 10m and 20m) with a "fade margin" of Cull Fade Margin (instead of cutting out immediately, vertices will fade out at random intervals within the margin). 
+* Enabling Distance Culling will make the object vertices only appear between Min Dist and Max Dist (e.g. object is visible between 10m and 20m).
 
 * Prevent tiling will use an algorithm loosely based on Technique 3 on [this](www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm) page to reduce appearance of texture tiling.
 NOTE: You need to provide a noise texture for anti-tiling to work correctly. There is one provided in the example project.
