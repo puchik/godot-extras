@@ -31,6 +31,8 @@ void LightLOD::_register_methods() {
     register_property<LightLOD, float>("fadeSpeed", &LightLOD::fadeSpeed, 2.0f);
 
     register_property<LightLOD, float>("tickSpeed", &LightLOD::tickSpeed, 0.5f);
+
+    register_property<LightLOD, bool>("enabled", &LightLOD::enabled, true);
 }
 
 LightLOD::LightLOD() {
@@ -50,6 +52,13 @@ void LightLOD::_exit_tree() {
 }
 
 void LightLOD::_ready() {
+    if (get_class() != "OmniLight" && get_class() != "SpotLight") {
+        printf("%s: ", get_name().alloc_c_string());
+        printf("A LightLOD script is attached, but this is not a Light!\n");
+        enabled = false;
+        return;
+    }
+
     // Save original light and shadow colours
     lightBaseEnergy = get_param(PARAM_ENERGY);
     lightTargetEnergy = lightBaseEnergy;

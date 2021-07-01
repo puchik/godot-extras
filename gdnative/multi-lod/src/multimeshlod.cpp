@@ -35,6 +35,8 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, float>("fadeExponent", &MultiMeshLOD::fadeExponent, 1.0f);
 
     register_property<MultiMeshLOD, float>("tickSpeed", &MultiMeshLOD::tickSpeed, 0.1f);
+
+    register_property<MultiMeshLOD, bool>("enabled", &MultiMeshLOD::enabled, true);
 }
 
 MultiMeshLOD::MultiMeshLOD() {
@@ -54,6 +56,13 @@ void MultiMeshLOD::_exit_tree() {
 }
 
 void MultiMeshLOD::_ready() {
+    if (get_class() != "MultiMeshInstance") {
+        printf("%s: ", get_name().alloc_c_string());
+        printf("A MultiMeshLOD script is attached, but this is not a MultiMeshLOD!\n");
+        enabled = false;
+        return;
+    }
+
     multiMesh = *get_multimesh();
     if (maxCount < 0) {
         maxCount = multiMesh->get_instance_count();

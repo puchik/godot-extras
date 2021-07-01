@@ -29,6 +29,8 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, float>("fadeSpeed", &GIProbeLOD::fadeSpeed, 1.0f);
 
     register_property<GIProbeLOD, float>("tickSpeed", &GIProbeLOD::tickSpeed, 0.5f);
+
+    register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::enabled, true);
 }
 
 GIProbeLOD::GIProbeLOD() {
@@ -47,6 +49,13 @@ void GIProbeLOD::_exit_tree() {
 }
 
 void GIProbeLOD::_ready() {
+    if (get_class() != "GIProbe") {
+        printf("%s: ", get_name().alloc_c_string());
+        printf("A GIProbeLOD script is attached, but this is not a GIProbe!\n");
+        enabled = false;
+        return;
+    }
+
     // Save original probe energy
     probeBaseEnergy = get_energy();
     probeTargetEnergy = probeBaseEnergy;

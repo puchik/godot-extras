@@ -66,6 +66,9 @@ private:
     // Flag to let LOD objects know to update their AABB (use after settinf FOV if necessary)
     bool updateAABBsFlag = false;
 
+    // Debug to console detail level. 0 = off, 1 = print the steps in each thread loop, 2 = print the object names as we go through them.
+    int debugLevel = 0;
+
     // Threading
     Ref<Thread> LODLoopThread;
     Ref<Semaphore> LODObjectsSemaphore;
@@ -107,6 +110,7 @@ public:
     bool updateAABBEveryLoop = false;
     void updateLodAABBs(); // Need AABB for getting screen percentages
     void stopLoop(); // Stops the main thread
+    void debugLevelPrint(int minDebugLevel, const char* text); // Use this 
 
     // Distance multipliers, available to access by other LOD objects
     float globalDistMult = 1.0f;

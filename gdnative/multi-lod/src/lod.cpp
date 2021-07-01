@@ -42,6 +42,8 @@ void LOD::_register_methods() {
     register_property<LOD, NodePath>("lod1path", &LOD::lod1path, NodePath());
     register_property<LOD, NodePath>("lod2path", &LOD::lod2path, NodePath());
     register_property<LOD, NodePath>("lod3path", &LOD::lod3path, NodePath());
+
+    register_property<LOD, bool>("enabled", &LOD::enabled, true);
 }
 
 LOD::LOD() {
