@@ -6,29 +6,30 @@ void GIProbeLOD::_register_methods() {
     register_method("_process", &GIProbeLOD::_process);
     register_method("_ready", &GIProbeLOD::_ready);
     register_method("_exit_tree", &GIProbeLOD::_exit_tree);
-    register_method("processData", &GIProbeLOD::processData);
+    register_method("process_data", &GIProbeLOD::process_data);
 
     // Exposed methods
-    register_method("updateLodAABB", &GIProbeLOD::updateLodAABB);
-    register_method("updateLodMultipliersFromManager", &GIProbeLOD::updateLodMultipliersFromManager);
+    register_method("update_lod_AABB", &GIProbeLOD::update_lod_AABB);
+    register_method("update_lod_multipliers_from_manager", &GIProbeLOD::update_lod_multipliers_from_manager);
 
     // Vars for distance-based (in metres)
     // This will be set by the ratio if useScreenPercentage is true
-    register_property<GIProbeLOD, float>("hideDist", &GIProbeLOD::hideDist, 80.0f); 
-    register_property<GIProbeLOD, float>("fadeRange", &GIProbeLOD::fadeRange, 5.0f);
+    // Distance and ratio exposed names and variable names do not match to avoid massive compatability breakage with an older version of the addon.
+    register_property<GIProbeLOD, float>("hideDist", &GIProbeLOD::hide_distance, 80.0f); 
+    register_property<GIProbeLOD, float>("fade_range", &GIProbeLOD::fade_range, 5.0f);
 
     // Screen percentage ratios (and if applicable)
-    register_property<GIProbeLOD, bool>("useScreenPercentage", &GIProbeLOD::useScreenPercentage, true);
-    register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hideRatio, 2.0f);
-    register_property<GIProbeLOD, float>("FOV", &GIProbeLOD::FOV, 70.0f);
-    register_property<GIProbeLOD, bool>("interactedWithManager", &GIProbeLOD::interactedWithManager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::use_screen_percentage, true);
+    register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
+    register_property<GIProbeLOD, float>("fov", &GIProbeLOD::fov, 70.0f);
+    register_property<GIProbeLOD, bool>("interacted_with_manager", &GIProbeLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
-    register_property<GIProbeLOD, bool>("affectedByDistanceMultipliers", &GIProbeLOD::affectedByDistanceMultipliers, true);
+    register_property<GIProbeLOD, bool>("affected_by_distance_multipliers", &GIProbeLOD::affected_by_distance_multipliers, true);
 
-    register_property<GIProbeLOD, float>("fadeSpeed", &GIProbeLOD::fadeSpeed, 1.0f);
+    register_property<GIProbeLOD, float>("fade_speed", &GIProbeLOD::fade_speed, 1.0f);
 
-    register_property<GIProbeLOD, float>("tickSpeed", &GIProbeLOD::tickSpeed, 0.5f);
+    register_property<GIProbeLOD, float>("tick_speed", &GIProbeLOD::tick_speed, 0.5f);
 
     register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::enabled, true);
 }
@@ -37,7 +38,6 @@ GIProbeLOD::GIProbeLOD() {
 }
 
 GIProbeLOD::~GIProbeLOD() {
-    // add your cleanup here
 }
 
 void GIProbeLOD::_init() {
@@ -45,7 +45,7 @@ void GIProbeLOD::_init() {
 
 void GIProbeLOD::_exit_tree() {
     // Leave LOD manager's list
-    attemptRegister(false);
+    try_register(false);
 }
 
 void GIProbeLOD::_ready() {
@@ -57,59 +57,62 @@ void GIProbeLOD::_ready() {
     }
 
     // Save original probe energy
-    probeBaseEnergy = get_energy();
-    probeTargetEnergy = probeBaseEnergy;
+    probe_base_energy = get_energy();
+    probe_target_energy = probe_base_energy;
 
     // FOV and AABB initial set up is done by the manager
 
     // Tell the LOD manager that we want to be part of the LOD list
-    attemptRegister(true);
+    try_register(true);
 }
 
-void GIProbeLOD::processData(Vector3 cameraLoc) {
+void GIProbeLOD::process_data(Vector3 camera_location) {
     // Double check for this node being in the scene tree
     // (Otherwise you get errors when ending the thread)
     // Get the distance from the node to the camera
-    Vector3 objLoc;
+    Vector3 object_location;
     if (is_inside_tree()) {
-        objLoc = get_global_transform().origin;
+        object_location = get_global_transform().origin;
     } else {
         return;
     }
 
-    float distance = cameraLoc.distance_to(objLoc);
+    float distance = camera_location.distance_to(object_location);
 
     // Get our target value
     // (max - current) / (max - min) will give us the ratio of where we want to set our values
-    probeTargetEnergy = CLAMP((hideDist * globalDistMult - distance) / (hideDist * globalDistMult - (hideDist * globalDistMult - fadeRange)), 0.0f, 1.0f);
+    float actual_hide_distance = hide_distance * global_distance_multiplier;
+    probe_target_energy = CLAMP((actual_hide_distance - distance) / (actual_hide_distance - (actual_hide_distance - fade_range)), 
+                                0.0f, 
+                                1.0f);
 
 }
 
 void GIProbeLOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
     if (!registered && enabled) {
-        attemptRegister(true);
+        try_register(true);
     }
 
     // Fade GIProbe if needed
-    real_t probeEnergy = get_energy();
-    if (registered && enabled && probeEnergy != probeTargetEnergy) {
+    real_t probe_energy = get_energy();
+    if (registered && enabled && (probe_energy != probe_target_energy)) {
         /// Lerp
         // If the probe energy wasn't 1, then the fade might be slower or faster
         // We don't want the speed to be dependent on energy, so multiply speed by base
-        probeEnergy = probeEnergy + (probeTargetEnergy - probeEnergy) * delta * (fadeSpeed * probeBaseEnergy);
-        set_energy(probeEnergy);
+        probe_energy = probe_energy + ((probe_target_energy - probe_energy) * (fade_speed * probe_base_energy * delta));
+        set_energy(probe_energy);
 
-        if (probeEnergy < 0.05 && is_visible()) {
+        if ((probe_energy < 0.05) && is_visible()) {
             hide();
-        } else if (probeEnergy >= 0.05 && !is_visible()) {
+        } else if ((probe_energy >= 0.05) && !is_visible()) {
             show();
         }
     }
 }
 
 // Update the distances based on the AABB
-void GIProbeLOD::updateLodAABB() {
+void GIProbeLOD::update_lod_AABB() {
     AABB objAABB = get_transformed_aabb();
 
     if (objAABB.has_no_area()) {
@@ -119,34 +122,34 @@ void GIProbeLOD::updateLodAABB() {
     }
 
     // Get the longest axis (conservative estimate of the object size vs screen)
-    float longestAxis = objAABB.get_longest_axis_size();
+    float longest_axis = objAABB.get_longest_axis_size();
 
     // Use an isosceles triangle to get a worst-case estimate of the distances
-    float tanTheta = tan((FOV * 3.14f / 180.0f));
+    float tan_theta = tan((fov * 3.14f / 180.0f));
 
     // Get the distances at which we have the LOD ratios of the screen
-    hideDist = ((longestAxis / (hideRatio / 100.0f)) / (2.0f * tanTheta));
+    hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
 }
 
-void GIProbeLOD::updateLodMultipliersFromManager() {
-    if (affectedByDistanceMultipliers) {
-        Node* LODManagerNode = get_node("/root/LodManager");
-        globalDistMult = LODManagerNode->get("globalDistMult");
+void GIProbeLOD::update_lod_multipliers_from_manager() {
+    if (affected_by_distance_multipliers) {
+        Node* lod_manager_node = get_node("/root/LodManager");
+        global_distance_multiplier = lod_manager_node->get("global_distance_multiplier");
     } else {
-        globalDistMult = 1.0f;
+        global_distance_multiplier = 1.0f;
     }
 }
 
-bool GIProbeLOD::attemptRegister(bool state) {
+bool GIProbeLOD::try_register(bool state) {
     if (get_node("/root/LodManager")) {
         if (state) {
-            get_node("/root/LodManager")->call("addObject", (Node*) this);
-            updateLodMultipliersFromManager();
+            get_node("/root/LodManager")->call("add_object", (Node*) this);
+            update_lod_multipliers_from_manager();
             registered = true;
         } else {
-            get_node("/root/LodManager")->call("removeObject", (Node*) this);
+            get_node("/root/LodManager")->call("remove_object", (Node*) this);
             registered = false;
-            interactedWithManager = false;
+            interacted_with_manager = false;
         }
         return true;
     }

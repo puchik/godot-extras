@@ -6,46 +6,46 @@
 using namespace godot;
 
 void LODManager::_register_methods() {
-    register_property<LODManager, bool>("useMultithreading", &LODManager::useMultithreading, true);
-    register_property<LODManager, int>("objectsPerFrame", &LODManager::objectsPerFrame, 10000);
+    register_property<LODManager, bool>("use_multithreading", &LODManager::use_multithreading, true);
+    register_property<LODManager, int>("objectsPerFrame", &LODManager::objects_per_frame, 10000);
     // Exposed methods
-    register_method("stopLoop", &LODManager::stopLoop);
-    register_method("updateLodMultipliersFromSettings", &LODManager::updateLodMultipliersFromSettings);
-    register_method("updateLodMultipliersInObjects", &LODManager::updateLodMultipliersInObjects);
-    register_method("updateLodAABBs", &LODManager::updateLodAABBs);
-    register_method("updateFOV", &LODManager::updateFOV);
-    register_method("setUpCamera", &LODManager::setUpCamera);
-    register_method("setCamera", &LODManager::setCamera);
+    register_method("stop_loop", &LODManager::stop_loop);
+    register_method("update_lod_multipliers_from_settings", &LODManager::update_lod_multipliers_from_settings);
+    register_method("update_lod_multipliers_in_objects", &LODManager::update_lod_multipliers_in_objects);
+    register_method("update_lod_AABBs", &LODManager::update_lod_AABBs);
+    register_method("update_fov", &LODManager::update_fov);
+    register_method("set_up_camera", &LODManager::set_up_camera);
+    register_method("set_camera", &LODManager::set_camera);
 
     register_method("_ready", &LODManager::_ready);
     register_method("_process", &LODManager::_process);
     register_method("_exit_tree", &LODManager::_exit_tree);
 
     // Thread function
-    register_method("mainLoop", &LODManager::mainLoop);
+    register_method("main_loop", &LODManager::main_loop);
 
-    register_property<LODManager, float>("FOV", &LODManager::FOV, 70.0f);
-    register_property<LODManager, bool>("updateFOVEveryLoop", &LODManager::updateFOVEveryLoop, false);
-    register_property<LODManager, bool>("updateAABBEveryLoop", &LODManager::updateAABBEveryLoop, false);
-    register_property<LODManager, float>("tickSpeed", &LODManager::tickSpeed, 0.2f);
+    register_property<LODManager, float>("fov", &LODManager::fov, 70.0f);
+    register_property<LODManager, bool>("update_fov_every_loop", &LODManager::update_fov_every_loop, false);
+    register_property<LODManager, bool>("update_AABB_every_loop", &LODManager::update_AABB_every_loop, false);
+    register_property<LODManager, float>("tick_speed", &LODManager::tick_speed, 0.2f);
 
     // Called by LOD objects with themselves as the argument when entering the tree
-    register_method("addObject", &LODManager::addObject);
-    register_method("removeObject", &LODManager::removeObject);
+    register_method("add_object", &LODManager::add_object);
+    register_method("remove_object", &LODManager::remove_object);
 
     // Multipliers, should be visible to other nodes so they may update.
-    register_property<LODManager, bool>("updateMultsEveryLoop", &LODManager::updateMultsEveryLoop, false);
+    register_property<LODManager, bool>("update_multipliers_every_loop", &LODManager::update_multipliers_every_loop, false);
     // However, if modifying directly, you must call updateLodMultipliersInObjects to take effect in objects
-    register_property<LODManager, float>("globalDistMult", &LODManager::globalDistMult, 1.0f);
-    register_property<LODManager, float>("lod1DistMult", &LODManager::lod1DistMult, 1.0f);
-    register_property<LODManager, float>("lod2DistMult", &LODManager::lod2DistMult, 1.0f);
-    register_property<LODManager, float>("lod3DistMult", &LODManager::lod3DistMult, 1.0f);
-    register_property<LODManager, float>("hideDistMult", &LODManager::hideDistMult, 1.0f);
-    register_property<LODManager, float>("unloadDistMult", &LODManager::unloadDistMult, 1.0f);
-    register_property<LODManager, float>("shadowDistMult", &LODManager::shadowDistMult, 1.0f);
+    register_property<LODManager, float>("global_distance_multiplier", &LODManager::global_distance_multiplier, 1.0f);
+    register_property<LODManager, float>("lod1_distance_multiplier", &LODManager::lod1_distance_multiplier, 1.0f);
+    register_property<LODManager, float>("lod2_distance_multiplier", &LODManager::lod2_distance_multiplier, 1.0f);
+    register_property<LODManager, float>("lod3_distance_multiplier", &LODManager::lod3_distance_multiplier, 1.0f);
+    register_property<LODManager, float>("hide_distance_multiplier", &LODManager::hide_distance_multiplier, 1.0f);
+    register_property<LODManager, float>("unload_distance_multiplier", &LODManager::unload_distance_multiplier, 1.0f);
+    register_property<LODManager, float>("shadow_distance_multiplier", &LODManager::shadow_distance_multiplier, 1.0f);
 
     // 0 = off, 1 = print the steps in each thread loop, 2 = print the object names as we go through them.
-    register_property<LODManager, int>("debugLevel", &LODManager::debugLevel, 0, GODOT_METHOD_RPC_MODE_DISABLED, 
+    register_property<LODManager, int>("debug_level", &LODManager::debug_level, 0, GODOT_METHOD_RPC_MODE_DISABLED, 
         GODOT_PROPERTY_USAGE_DEFAULT, GODOT_PROPERTY_HINT_ENUM, "Off,Print thread actions,Print thread actions and object names");
 }
 
@@ -62,76 +62,76 @@ void LODManager::_init() {
 
 void LODManager::_exit_tree() {
     // Stop loop thread if exiting
-    if (useMultithreading) {
-        stopLoop();
+    if (use_multithreading) {
+        stop_loop();
     }
 }
 
 void LODManager::_ready() {
     // Control threading with semaphore
-    if (useMultithreading) {
-        debugLevelPrint(1, "Creating the Semaphore for the LOD thread.\n");
+    if (use_multithreading) {
+        debug_level_print(1, "Creating the Semaphore for the LOD thread.\n");
         // Do it before the update LOD mults and FOV call because it's used there
-        LODObjectsSemaphore = (Ref<Semaphore>) Semaphore::_new();
-        LODObjectsSemaphore->post();
+        lod_objects_semaphore = (Ref<Semaphore>) Semaphore::_new();
+        lod_objects_semaphore->post();
     }
 
-    debugLevelPrint(1, "Setting up the camera for LOD.\n");
-    setUpCamera();
+    debug_level_print(1, "Setting up the camera for LOD.\n");
+    set_up_camera();
 
-    debugLevelPrint(1, "Getting the project settings for LOD");
-    projectSettings = ProjectSettings::get_singleton();
-    updateLodMultipliersFromSettings();
+    debug_level_print(1, "Getting the project settings for LOD");
+    project_settings = ProjectSettings::get_singleton();
+    update_lod_multipliers_from_settings();
     // We'll be checking the FPS
     perf = Performance::get_singleton();
     last_run = clock();
 
     // Start main loop thread
-    if (useMultithreading) {
+    if (use_multithreading) {
         // Start thread
-        if (debugLevel > 0)
+        if (debug_level > 0)
         {
             printf("Starting the LOD thread.\n");
         }
-        LODLoopThread = (Ref<Thread>) Thread::_new();
-        LODLoopThread->start(this, "mainLoop");
+        lod_loop_thread = (Ref<Thread>) Thread::_new();
+        lod_loop_thread->start(this, "main_loop");
     }
 }
 
 void LODManager::_process(float delta) {
     if (!camera) {
-        setUpCamera();
+        set_up_camera();
     }
-    if (!useMultithreading && !managerRemoved) {
-        LODFunction();
+    if (!use_multithreading && !manager_removed) {
+        lod_function();
     }
 }
 
-void LODManager::LODFunction() {
-        currentFPS = perf->get_monitor(0); // gets the FPS
+void LODManager::lod_function() {
+        current_fps = perf->get_monitor(0); // gets the FPS
         // A bit hacky, but we'll check if the main thread is frozen/doing something heavy.
         // We don't need LOD when nothing is really moving nor do we want to potentially overload
         // the main thread with deferred calls.
-        if (currentFPS < 7.0f) {
+        if (current_fps < 7.0f) {
             return;
         }
 
         // Could use OS.delay_msec, but loop may take a long time so keep track of time manually instead
-        if ((double)(clock() - last_run) / CLOCKS_PER_SEC < tickSpeed) {
+        if ((double)(clock() - last_run) / CLOCKS_PER_SEC < tick_speed) {
             return;
         }
 
-        debugLevelPrint(1, "Checking if the camera we want to use in the LOD thread is valid.\n");
+        debug_level_print(1, "Checking if the camera we want to use in the LOD thread is valid.\n");
         if (camera && camera->is_inside_tree()) {
-            debugLevelPrint(1, "Getting the camera location in the LOD thread.\n");
-            cameraLoc = camera->get_global_transform().origin;        
+            debug_level_print(1, "Getting the camera location in the LOD thread.\n");
+            camera_location = camera->get_global_transform().origin;        
         } else {
-            debugLevelPrint(1, "Camera used by the LOD Manager is not in the scene tree.\n");
+            debug_level_print(1, "Camera used by the LOD Manager is not in the scene tree.\n");
             return;
         }
 
-        if (useMultithreading) {
-            LODObjectsSemaphore->wait();
+        if (use_multithreading) {
+            lod_objects_semaphore->wait();
         }
 
         last_run = clock();
@@ -139,155 +139,155 @@ void LODManager::LODFunction() {
         // --------- TODO: Make a dynamic number of objects checked per frame --------------------
         // Probably do a calculation here, use FPS
         // Get next "chunk" of objects to check if not multithreaded
-        int nextLoopEndIndex;
-        if (!useMultithreading) {
-            nextLoopEndIndex = currentLoopIndex + 8000;
+        int next_loop_end_index;
+        if (!use_multithreading) {
+            next_loop_end_index = current_loop_index + 8000;
         }
 
         // Go through all array lists
-        for (int i = 0; i < LODObjectArrays.size(); i++) {
-            if (!useMultithreading && i == 0) {
-                i = CLAMP((int)floor((double)currentLoopIndex / (double)MAX_ARRAY_SIZE), 0, LODObjectArrays.size() - 1);
+        for (int i = 0; i < lod_object_arrays.size(); i++) {
+            if (!use_multithreading && i == 0) {
+                i = CLAMP((int)floor((double)current_loop_index / (double)MAX_ARRAY_SIZE), 0, lod_object_arrays.size() - 1);
             }
-            if (!useMultithreading && nextLoopEndIndex < i * MAX_ARRAY_SIZE) {
+            if (!use_multithreading && (next_loop_end_index < i * MAX_ARRAY_SIZE)) {
                 break;
             }
 
-            Array LODObjects = LODObjectArrays[i];
-            debugLevelPrint(1, "Starting to go through our list of LOD objects.\n");
-            for (int j = 0; j < LODObjects.size(); j++) {
-                if (!useMultithreading && j == 0) {
-                    j = CLAMP(currentLoopIndex - i * MAX_ARRAY_SIZE, 0, LODObjects.size() - 1);
+            Array lod_objects = lod_object_arrays[i];
+            debug_level_print(1, "Starting to go through our list of LOD objects.\n");
+            for (int j = 0; j < lod_objects.size(); j++) {
+                if (!use_multithreading && (j == 0)) {
+                    j = CLAMP(current_loop_index - i * MAX_ARRAY_SIZE, 0, lod_objects.size() - 1);
                 }
-                if (!useMultithreading && nextLoopEndIndex < j + i * MAX_ARRAY_SIZE) {
+                if (!use_multithreading && (next_loop_end_index < (j + i * MAX_ARRAY_SIZE))) {
                     break;
                 }
 
                 // LOD thread might be still going through the list when LOD exits tree, check
-                if (managerRemoved) {
+                if (manager_removed) {
                     break;
                 }
 
                 // Make sure object exists *and* is in the tree.
                 // Exiting without stopping the LOD thread causes errors otherwise.
-                debugLevelPrint(2, "Checking if a LOD object list entry is valid and inside the scene tree in the LOD thread.\n");
-                if (LODObjects[j] && Object::cast_to<Node>(LODObjects[j])->is_inside_tree()) {
-                    debugLevelPrint(2, "LOD object is valid.\n");
+                debug_level_print(2, "Checking if a LOD object list entry is valid and inside the scene tree in the LOD thread.\n");
+                if (lod_objects[j] && Object::cast_to<Node>(lod_objects[j])->is_inside_tree()) {
+                    debug_level_print(2, "LOD object is valid.\n");
 
-                    debugLevelPrint(2, "Getting the Node associated with this LOD object in the LOD thread.\n");
-                    Node* LODObjectNode = Object::cast_to<Node>(LODObjects[j]);
-                    debugLevelPrint(2, "Object name: ");
-                    debugLevelPrint(2, LODObjectNode->get_name().alloc_c_string());
-                    debugLevelPrint(2, "\n");
+                    debug_level_print(2, "Getting the Node associated with this LOD object in the LOD thread.\n");
+                    Node* lod_object_node = Object::cast_to<Node>(lod_objects[j]);
+                    debug_level_print(2, "Object name: ");
+                    debug_level_print(2, lod_object_node->get_name().alloc_c_string());
+                    debug_level_print(2, "\n");
                     // Update multiplier if needed
-                    if (updateMultsFlag && LODObjectNode->has_method("updateLodMultipliersFromManager")) {
-                        debugLevelPrint(2, "Telling the LOD object to update its multipliers in the LOD thread.\n");
+                    if (update_multipliers_flag && lod_object_node->has_method("update_lod_multipliers_from_manager")) {
+                        debug_level_print(2, "Telling the LOD object to update its multipliers in the LOD thread.\n");
                         // Tell it to update. It will fetch the distances from our public values
-                        LODObjectNode->call("updateLodMultipliersFromManager");
+                        lod_object_node->call("update_lod_multipliers_from_manager");
                     }
                     // If we are seeing it for the first time, give it our FOV and update its AABBs
-                    debugLevelPrint(2, "Checking if this LOD object has interacted with the LOD manager yet in the LOD thread.\n");
-                    bool interactedWithManager = LODObjectNode->get("interactedWithManager");
+                    debug_level_print(2, "Checking if this LOD object has interacted with the LOD manager yet in the LOD thread.\n");
+                    bool interacted_with_manager = lod_object_node->get("interacted_with_manager");
                     // Update FOV if needed
-                    if ((updateFOVsFlag || !interactedWithManager)) {
-                        debugLevelPrint(2, "Setting the FOV in this LOD Object.\n");
-                        LODObjectNode->set("FOV", FOV);
+                    if ((update_fovs_flag || !interacted_with_manager)) {
+                        debug_level_print(2, "Setting the FOV in this LOD Object.\n");
+                        lod_object_node->set("fov", fov);
                     }
                     // Update AABB if needed
-                    if ((updateAABBsFlag || !interactedWithManager) && LODObjectNode->get("useScreenPercentage")) {
-                        debugLevelPrint(2, "Telling this LOD object to update its AABBs.\n");
-                        LODObjectNode->call("updateLodAABB");
+                    if ((update_AABBs_flag || !interacted_with_manager) && lod_object_node->get("use_screen_percentage")) {
+                        debug_level_print(2, "Telling this LOD object to update its AABBs.\n");
+                        lod_object_node->call("update_lod_AABBs");
                     }
-                    if (!interactedWithManager) {
-                        debugLevelPrint(2, "Setting this LOD object's interaction with the manager flag to true.\n");
-                        LODObjectNode->set("interactedWithManager", true);
+                    if (!interacted_with_manager) {
+                        debug_level_print(2, "Setting this LOD object's interaction with the manager flag to true.\n");
+                        lod_object_node->set("interacted_with_manager", true);
                     }
                     // Pass camera location and do calculations on LOD object
-                    debugLevelPrint(2, "Checking if the LOD object has a valid processData function.\n");
-                    if (LODObjectNode->has_method("processData")) {
-                        debugLevelPrint(2, "It does. Calling the processData function with the camera found.\n");
-                        LODObjectNode->call("processData", cameraLoc);
+                    debug_level_print(2, "Checking if the LOD object has a valid process_data function.\n");
+                    if (lod_object_node->has_method("process_data")) {
+                        debug_level_print(2, "It does. Calling the process_data function with the camera found.\n");
+                        lod_object_node->call("process_data", camera_location);
                     } else {
-                        debugLevelPrint(2, "A valid processData function was not found.\n");
+                        debug_level_print(2, "A valid process_data function was not found.\n");
                     }
                 } else {
-                    debugLevelPrint(1, "LOD Object is NOT valid.\n");
+                    debug_level_print(1, "LOD Object is NOT valid.\n");
                 }
             }
-            if (managerRemoved) {
+            if (manager_removed) {
                 break;
             }
         }
-        if (useMultithreading) {
-            LODObjectsSemaphore->post();
+        if (use_multithreading) {
+            lod_objects_semaphore->post();
         }
 
-        if (!useMultithreading) {
-            if (nextLoopEndIndex >= LODObjectCount) {
-                currentLoopIndex = 0;
+        if (!use_multithreading) {
+            if (next_loop_end_index >= lod_object_count) {
+                current_loop_index = 0;
             } else {
-                currentLoopIndex = nextLoopEndIndex;
+                current_loop_index = next_loop_end_index;
             }
         }
 
-        if (updateMultsFlag) {
-            updateMultsFlag = false;
+        if (update_multipliers_flag) {
+            update_multipliers_flag = false;
         }
-        if (updateFOVsFlag) {
-            updateFOVsFlag = false;
+        if (update_fovs_flag) {
+            update_fovs_flag = false;
         }
-        if (updateAABBsFlag) {
-            updateAABBsFlag = false;
+        if (update_AABBs_flag) {
+            update_AABBs_flag = false;
         }
 
         // If necessary, update multipliers and/or FOV
-        if (updateMultsEveryLoop) {
-            updateLodMultipliersFromSettings();
+        if (update_multipliers_every_loop) {
+            update_lod_multipliers_from_settings();
         }
-        if (updateFOVEveryLoop) {
-            updateFOV();
+        if (update_fov_every_loop) {
+            update_fov();
         }
-        if (updateAABBEveryLoop) {
-            updateLodAABBs();
+        if (update_AABB_every_loop) {
+            update_lod_AABBs();
         }
 }
 
-void LODManager::mainLoop() {
-    while (!managerRemoved) {
-        LODFunction();
+void LODManager::main_loop() {
+    while (!manager_removed) {
+        lod_function();
     }
 }
 
-void LODManager::stopLoop() {
-    debugLevelPrint(1, "Stopping the LOD Manager loop/main thread.\n");
-    if (managerRemoved) {
+void LODManager::stop_loop() {
+    debug_level_print(1, "Stopping the LOD Manager loop/main thread.\n");
+    if (manager_removed) {
         return;
     } else {
-        managerRemoved = true;
+        manager_removed = true;
     }
 
-    if (LODLoopThread->is_active()) {
-        LODLoopThread->wait_to_finish();
+    if (lod_loop_thread->is_active()) {
+        lod_loop_thread->wait_to_finish();
     }
 
-    LODObjectsSemaphore->free();
+    lod_objects_semaphore->free();
 }
 
-void LODManager::addObject(Node* obj) {
+void LODManager::add_object(Node* obj) {
     // TODO: Print the object name.
-    debugLevelPrint(1, "Adding a new object to the LOD Manager's list.\n");
+    debug_level_print(1, "Adding a new object to the LOD Manager's list.\n");
 
     // Go through array list to find one that has space
-    if (useMultithreading) {
-        LODObjectsSemaphore->wait();
+    if (use_multithreading) {
+        lod_objects_semaphore->wait();
     }
 
     bool added = false; // Keep track in case we need to add a new list
-    for (int i = 0; i < LODObjectArrays.size(); i++) {
-        Array LODObjects = LODObjectArrays[i];
-        if (LODObjects.size() < MAX_ARRAY_SIZE) {
-            LODObjects.push_back(obj);
-            LODObjectCount++;
+    for (int i = 0; i < lod_object_arrays.size(); i++) {
+        Array lod_objects = lod_object_arrays[i];
+        if (lod_objects.size() < MAX_ARRAY_SIZE) {
+            lod_objects.push_back(obj);
+            lod_object_count++;
             added = true;
             break;
         }
@@ -296,124 +296,124 @@ void LODManager::addObject(Node* obj) {
     if (!added) {
         Array newLODObjectArray;
         newLODObjectArray.push_back(obj);
-        LODObjectArrays.push_back(newLODObjectArray);
+        lod_object_arrays.push_back(newLODObjectArray);
     }
 
-    if (useMultithreading) {
-        LODObjectsSemaphore->post();
+    if (use_multithreading) {
+        lod_objects_semaphore->post();
     }
 }
 
-void LODManager::removeObject(Node* obj) {
+void LODManager::remove_object(Node* obj) {
     // If we're closing/have closed the LOD manager, don't bother doing expensive finds and removes.
     // It might take a while and is unnecessary.
-    if (managerRemoved) {
+    if (manager_removed) {
         // Also array should be freed by Godot
         return;
     }
 
     // TODO: Print the object name.
-    debugLevelPrint(1, "Removing an object from the LOD Manager's list.\n");
-    if (useMultithreading) {
-        LODObjectsSemaphore->wait();
+    debug_level_print(1, "Removing an object from the LOD Manager's list.\n");
+    if (use_multithreading) {
+        lod_objects_semaphore->wait();
     }
 
     // Find which array has this object
-    for (int i = 0; i < LODObjectArrays.size(); i++) {
-        Array LODObjects = LODObjectArrays[i];
-        int index = LODObjects.find(obj);
+    for (int i = 0; i < lod_object_arrays.size(); i++) {
+        Array lod_objects = lod_object_arrays[i];
+        int index = lod_objects.find(obj);
         if (index > -1) {
-            LODObjects.remove(index);
-            LODObjectCount--;
+            lod_objects.remove(index);
+            lod_object_count--;
             break;
         }
     }
 
-    if (useMultithreading) {
-        LODObjectsSemaphore->post();
+    if (use_multithreading) {
+        lod_objects_semaphore->post();
     }
 }
 
 
-void LODManager::updateLodMultipliersFromSettings() {
-    debugLevelPrint(1, "Loading LOD multipliers from the project settings.\n");
+void LODManager::update_lod_multipliers_from_settings() {
+    debug_level_print(1, "Loading LOD multipliers from the project settings.\n");
     // Load multipliers from project settings
-    globalDistMult = (float)projectSettings->get_setting("rendering/quality/lod/global_multiplier");
-    lod1DistMult = (float)projectSettings->get_setting("rendering/quality/lod/lod1_multiplier");
-    lod2DistMult = (float)projectSettings->get_setting("rendering/quality/lod/lod2_multiplier");
-    lod3DistMult = (float)projectSettings->get_setting("rendering/quality/lod/lod3_multiplier");
-    hideDistMult = (float)projectSettings->get_setting("rendering/quality/lod/hide_multiplier");
-    unloadDistMult = (float)projectSettings->get_setting("rendering/quality/lod/unload_multiplier");
-    shadowDistMult = (float)projectSettings->get_setting("rendering/quality/lod/shadow_disable_multiplier");
+    global_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/global_multiplier");
+    lod1_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/lod1_multiplier");
+    lod2_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/lod2_multiplier");
+    lod3_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/lod3_multiplier");
+    hide_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/hide_multiplier");
+    unload_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/unload_multiplier");
+    shadow_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/shadow_disable_multiplier");
 
     // Update LOD objects' multipliers
-    updateLodMultipliersInObjects();
+    update_lod_multipliers_in_objects();
 }
 
-void LODManager::updateLodMultipliersInObjects() {
-    debugLevelPrint(1, "Setting the flag to update LOD multipliers in the LOD thread to true.\n");
+void LODManager::update_lod_multipliers_in_objects() {
+    debug_level_print(1, "Setting the flag to update LOD multipliers in the LOD thread to true.\n");
 
     // Enable the flag to update LOD multipliers in the thread loop
     // Make sure we're not partway through the loop
-    if (useMultithreading) {
-        LODObjectsSemaphore->wait();
+    if (use_multithreading) {
+        lod_objects_semaphore->wait();
     }
-    updateMultsFlag = true;
-    if (useMultithreading) {
-        LODObjectsSemaphore->post();
+    update_multipliers_flag = true;
+    if (use_multithreading) {
+        lod_objects_semaphore->post();
     }
 }
 
-void LODManager::updateFOV() {
-    debugLevelPrint(1, "Updating the LOD manager camera FOV.\n");
+void LODManager::update_fov() {
+    debug_level_print(1, "Updating the LOD manager camera FOV.\n");
 
     if (!camera) {
         // No camera to get FOV from
         return;
     }
-    FOV = camera->get_fov();
+    fov = camera->get_fov();
 
-    debugLevelPrint(1, "Setting the flag to update FOV in LOD objects to true.\n");
+    debug_level_print(1, "Setting the flag to update FOV in LOD objects to true.\n");
     // Enable the flag to update FOV in the thread loop
     // Make sure we're not partway through the loop
-    if (useMultithreading) {
-        LODObjectsSemaphore->wait();
+    if (use_multithreading) {
+        lod_objects_semaphore->wait();
     }
-    updateFOVsFlag = true;
-    if (useMultithreading) {
-        LODObjectsSemaphore->post();
+    update_fovs_flag = true;
+    if (use_multithreading) {
+        lod_objects_semaphore->post();
     }
 }
 
-void LODManager::updateLodAABBs() {
-    debugLevelPrint(1, "Setting the flag to update LOD AABBs in the LOD thread to true.\n");
+void LODManager::update_lod_AABBs() {
+    debug_level_print(1, "Setting the flag to update LOD AABBs in the LOD thread to true.\n");
     // Enable the flag to update FOV in the thread loop
     // Make sure we're not partway through the loop
-    if (useMultithreading) {
-        LODObjectsSemaphore->wait();
+    if (use_multithreading) {
+        lod_objects_semaphore->wait();
     }
-    updateAABBsFlag = true;
-    if (useMultithreading) {
-        LODObjectsSemaphore->post();
+    update_AABBs_flag = true;
+    if (use_multithreading) {
+        lod_objects_semaphore->post();
     }
 }
 
-bool LODManager::setUpCamera() {
-    debugLevelPrint(1, "Setting up the camera info in the LOD manager.\n");
+bool LODManager::set_up_camera() {
+    debug_level_print(1, "Setting up the camera info in the LOD manager.\n");
     if (get_viewport()->get_camera()) {
         camera = get_viewport()->get_camera();
-        updateFOV();
+        update_fov();
         return true;
     }
     return false;
 }
 
-bool LODManager::setCamera(Node* givenNode) {
-    debugLevelPrint(1, "Setting the camera used by the LOD Manager.\n");
-    Camera* cameraNode;
-    cameraNode = Object::cast_to<Camera>(givenNode);
-    if (cameraNode) {
-        camera = cameraNode;
+bool LODManager::set_camera(Node* given_node) {
+    debug_level_print(1, "Setting the camera used by the LOD Manager.\n");
+    Camera* camera_node;
+    camera_node = Object::cast_to<Camera>(given_node);
+    if (camera_node) {
+        camera = camera_node;
         return true;
     } else {
         printf("Camera provided in setCamera of LODManager was not valid.\n");
@@ -421,8 +421,8 @@ bool LODManager::setCamera(Node* givenNode) {
     }
 }
 
-void LODManager::debugLevelPrint(int minDebugLevel, const char* message) {
-    if (debugLevel >= minDebugLevel)
+void LODManager::debug_level_print(int min_debug_level, const char* message) {
+    if (debug_level >= min_debug_level)
     {
         printf(message);
     }

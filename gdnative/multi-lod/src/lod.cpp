@@ -9,39 +9,40 @@ void LOD::_register_methods() {
     register_method("_process", &LOD::_process);
     register_method("_ready", &LOD::_ready);
     register_method("_exit_tree", &LOD::_exit_tree);
-    register_method("processData", &LOD::processData);
+    register_method("process_data", &LOD::process_data);
     // Exposed methods
-    register_method("updateLodAABB", &LOD::updateLodAABB);
-    register_method("updateLodMultipliersFromManager", &LOD::updateLodMultipliersFromManager);
+    register_method("update_lod_AABB", &LOD::update_lod_AABB);
+    register_method("update_lod_multipliers_from_manager", &LOD::update_lod_multipliers_from_manager);
     // Vars for distance-based (in metres)
-    // These will be set by the ratios if useScreenPercentage is true
-    register_property<LOD, float>("lod1dist", &LOD::lod1dist, 7.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
-    register_property<LOD, float>("lod2dist", &LOD::lod2dist, 12.0f);
-    register_property<LOD, float>("lod3dist", &LOD::lod3dist, 30.0f);
-    register_property<LOD, float>("hideDist", &LOD::hideDist, 100.0f);
-    register_property<LOD, float>("unloadDist", &LOD::unloadDist, -1.0f);
+    // These will be set by the ratios if use_screen_percentage is true
+    // Distance and ratio exposed names and variable names do not match to avoid massive compatability breakage with an older version of the addon.
+    register_property<LOD, float>("lod1dist", &LOD::lod1_distance, 7.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
+    register_property<LOD, float>("lod2dist", &LOD::lod2_distance, 12.0f);
+    register_property<LOD, float>("lod3dist", &LOD::lod3_distance, 30.0f);
+    register_property<LOD, float>("hideDist", &LOD::hide_distance, 100.0f);
+    register_property<LOD, float>("unloadDist", &LOD::unload_distance, -1.0f);
 
     // Screen percentage ratios (and if applicable)
-    register_property<LOD, bool>("useScreenPercentage", &LOD::useScreenPercentage, true);
-    register_property<LOD, float>("lod1ratio", &LOD::lod1ratio, 25.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
-    register_property<LOD, float>("lod2ratio", &LOD::lod2ratio, 10.0f);
-    register_property<LOD, float>("lod3ratio", &LOD::lod3ratio, 5.5f);
-    register_property<LOD, float>("hideRatio", &LOD::hideRatio, 1.0f);
-    register_property<LOD, float>("unloadRatio", &LOD::unloadRatio, -1.0f);
-    register_property<LOD, float>("FOV", &LOD::FOV, 70.0f);
-    register_property<LOD, bool>("interactedWithManager", &LOD::interactedWithManager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<LOD, bool>("use_screen_percentage", &LOD::use_screen_percentage, true);
+    register_property<LOD, float>("lod1ratio", &LOD::lod1_ratio, 25.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
+    register_property<LOD, float>("lod2ratio", &LOD::lod2_ratio, 10.0f);
+    register_property<LOD, float>("lod3ratio", &LOD::lod3_ratio, 5.5f);
+    register_property<LOD, float>("hideRatio", &LOD::hide_ratio, 1.0f);
+    register_property<LOD, float>("unloadRatio", &LOD::unload_ratio, -1.0f);
+    register_property<LOD, float>("fov", &LOD::fov, 70.0f);
+    register_property<LOD, bool>("interacted_with_manager", &LOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     
     // Whether to use distance multipliers from project settings
-    register_property<LOD, bool>("affectedByDistanceMultipliers", &LOD::affectedByDistanceMultipliers, true);
+    register_property<LOD, bool>("affected_by_distance_multipliers", &LOD::affected_by_distance_multipliers, true);
 
-    register_property<LOD, bool>("disableProcessing", &LOD::disableProcessing, false); // Hide the node as well as disabling its _process and _physics_process
+    register_property<LOD, bool>("disable_processing", &LOD::disable_processing, false); // Hide the node as well as disabling its _process and _physics_process
 
-    register_property<LOD, float>("tickSpeed", &LOD::tickSpeed, 0.2f);
+    register_property<LOD, float>("tick_speed", &LOD::tick_speed, 0.2f);
 
-    register_property<LOD, NodePath>("lod0path", &LOD::lod0path, NodePath());
-    register_property<LOD, NodePath>("lod1path", &LOD::lod1path, NodePath());
-    register_property<LOD, NodePath>("lod2path", &LOD::lod2path, NodePath());
-    register_property<LOD, NodePath>("lod3path", &LOD::lod3path, NodePath());
+    register_property<LOD, NodePath>("lod0_path", &LOD::lod0_path, NodePath());
+    register_property<LOD, NodePath>("lod1_path", &LOD::lod1_path, NodePath());
+    register_property<LOD, NodePath>("lod2_path", &LOD::lod2_path, NodePath());
+    register_property<LOD, NodePath>("lod3_path", &LOD::lod3_path, NodePath());
 
     register_property<LOD, bool>("enabled", &LOD::enabled, true);
 }
@@ -54,13 +55,12 @@ LOD::~LOD() {
 }
 
 void LOD::_init() {
-    // initialize any variables here
 }
 
 void LOD::_exit_tree() {
     // Leave LOD manager's list
     enabled = false;
-    attemptRegister(false);
+    try_register(false);
 }
 
 void LOD::_ready() {
@@ -68,18 +68,18 @@ void LOD::_ready() {
     // If there's no path, search for any children with "LOD + n" in its name
 
     // So we don't have to fetch list of children once for every object
-    Array childNodes;
-    int64_t childCount;
-    if (!has_node(lod0path)|| !has_node(lod1path) || !has_node(lod2path) || !has_node(lod3path)) {
-        childNodes = get_children();
-        childCount = get_child_count();
+    Array child_nodes;
+    int64_t child_count;
+    if (!has_node(lod0_path)|| !has_node(lod1_path) || !has_node(lod2_path) || !has_node(lod3_path)) {
+        child_nodes = get_children();
+        child_count = get_child_count();
     }
 
-    if (has_node(lod0path)) {
-        lod0 = Object::cast_to<Spatial>(get_node(lod0path));
+    if (has_node(lod0_path)) {
+        lod0 = Object::cast_to<Spatial>(get_node(lod0_path));
     } else {
-        for (int i = 0; i < childCount; i++) {
-            Node *child = Object::cast_to<Node>(childNodes[i]);
+        for (int i = 0; i < child_count; i++) {
+            Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD0") >= 0) {
                 lod0 = Object::cast_to<Spatial>(child);
                 if (lod0) {
@@ -89,11 +89,11 @@ void LOD::_ready() {
         }
     }
 
-    if (has_node(lod1path)) {
-        lod1 = Object::cast_to<Spatial>(get_node(lod1path));
+    if (has_node(lod1_path)) {
+        lod1 = Object::cast_to<Spatial>(get_node(lod1_path));
     } else {
-        for (int i = 0; i < childCount; i++) {
-            Node *child = Object::cast_to<Node>(childNodes[i]);
+        for (int i = 0; i < child_count; i++) {
+            Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD1") >= 0) {
                 lod1 = Object::cast_to<Spatial>(child);
                 if (lod1) {
@@ -103,11 +103,11 @@ void LOD::_ready() {
         }
     }
 
-    if (has_node(lod2path)) {
-        lod2 = Object::cast_to<Spatial>(get_node(lod2path));
+    if (has_node(lod2_path)) {
+        lod2 = Object::cast_to<Spatial>(get_node(lod2_path));
     } else {
-        for (int i = 0; i < childCount; i++) {
-            Node *child = Object::cast_to<Node>(childNodes[i]);
+        for (int i = 0; i < child_count; i++) {
+            Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD2") >= 0) {
                 lod2 = Object::cast_to<Spatial>(child);
                 if (lod2) {
@@ -117,11 +117,11 @@ void LOD::_ready() {
         }
     }
 
-    if (has_node(lod3path)) {
-        lod3 = Object::cast_to<Spatial>(get_node(lod3path));
+    if (has_node(lod3_path)) {
+        lod3 = Object::cast_to<Spatial>(get_node(lod3_path));
     } else {
-        for (int i = 0; i < childCount; i++) {
-            Node *child = Object::cast_to<Node>(childNodes[i]);
+        for (int i = 0; i < child_count; i++) {
+            Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD3") >= 0) {
                 lod3 = Object::cast_to<Spatial>(child);
                 if (lod3) {
@@ -134,163 +134,122 @@ void LOD::_ready() {
     // FOV and AABB initial set up is done by the manager
 
     // Tell the LOD manager that we want to be part of the LOD list
-    attemptRegister(true);
+    try_register(true);
 }
 
-void LOD::processData(Vector3 cameraLoc) {
+void LOD::process_data(Vector3 camera_location) {
     // Double check for this node being in the scene tree
     // (Otherwise you get errors when ending the thread)
     // Get the distance from the node to the camera (and subtract AABB offset, if applicable)
-    Vector3 objLoc;
+    Vector3 object_location;
     if (is_inside_tree()) {
-        objLoc = get_global_transform().origin;
+        object_location = get_global_transform().origin;
     } else {
         return;
     }
  
-    if (useScreenPercentage) {
-        objLoc -= transformOffsetAABB;
+    if (use_screen_percentage) {
+        object_location -= transform_offset_AABB;
     }
-    float distance = cameraLoc.distance_to(objLoc);
+    float distance = camera_location.distance_to(object_location);
 
-    if (unloadDist * globalDistMult * unloadDistMult > 0.0f && distance > unloadDist * globalDistMult * unloadDistMult) {
+    // Calculate distances
+    float actual_unload_distance = unload_distance * unload_distance_multiplier * global_distance_multiplier;
+    float actual_hide_distance = hide_distance * hide_distance_multiplier * global_distance_multiplier;
+    float actual_lod3_distance = lod3_distance * lod3_distance_multiplier * global_distance_multiplier;
+    float actual_lod2_distance = lod2_distance * lod2_distance_multiplier * global_distance_multiplier;
+    float actual_lod1_distance = lod1_distance * lod1_distance_multiplier * global_distance_multiplier;
+
+    // Validity checks
+    bool lod0_valid = lod0 && lod0->is_inside_tree();
+    bool lod1_valid = lod1 && lod1->is_inside_tree();
+    bool lod2_valid = lod2 && lod2->is_inside_tree();
+    bool lod3_valid = lod3 && lod3->is_inside_tree();
+
+    // Visiblity checks. They also include the validity check.
+    bool lod0_showing = lod0_valid && lod0->is_visible();
+    bool lod1_showing = lod1_valid && lod1->is_visible();
+    bool lod2_showing = lod2_valid && lod2->is_visible();
+    bool lod3_showing = lod3_valid && lod3->is_visible();
+
+    if ((actual_unload_distance > 0.0f) && (distance > actual_unload_distance)) {
         queue_free();
-    } else if (hideDist * globalDistMult * hideDistMult > 0.0f && distance > hideDist * globalDistMult * hideDistMult) {
-        if (lastState == 4) {
+    } else if ((actual_hide_distance > 0.0f) && (distance > actual_hide_distance)) {
+        if (last_state == 4) {
             return;
         }
-        lastState = 4;
-        if (lod0 && lod0->is_inside_tree() && lod0->is_visible()) {
-            lod0->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod0, false);
-            }
+        last_state = 4;
+        if (lod0_showing) {
+            show_lod(lod0, false);
         }
-        if (lod1 && lod1->is_inside_tree() && lod1->is_visible()) {
-            lod1->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod1, false);
-            }
+        if (lod1_showing) {
+            show_lod(lod1, false);
         }
-        if (lod2 && lod2->is_inside_tree() && lod2->is_visible()) {
-            lod2->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod2, false);
-            }
+        if (lod2_showing) {
+            show_lod(lod2, false);
         }
-        if (lod3 && lod3->is_inside_tree() && lod3->is_visible()) {
-            lod3->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod3, false);
-            }
+        if (lod3_showing) {
+            show_lod(lod3, false);
         }
-    } else if (lod3 && lod3->is_inside_tree() && lod3dist * globalDistMult * lod3DistMult > 0.0f && distance > lod3dist * globalDistMult * lod2DistMult) {
-        if (lastState == 3) {
+    } else if (lod3_valid && (actual_lod3_distance > 0.0f) && (distance > actual_lod3_distance)) {
+        if (last_state == 3) {
             return;
         }
-        lastState = 3;
-        lod3->show();
-        if (disableProcessing) {
-            call_deferred("setNodeProcessing", lod3, true);
+        last_state = 3;
+        show_lod(lod3, true);
+        if (lod0_showing) {
+            show_lod(lod0, false);
         }
-        if (lod0 && lod0->is_inside_tree() && lod0->is_visible()) {
-            lod0->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod0, false);
-            }
+        if (lod1_showing) {
+            show_lod(lod1, false);
         }
-        if (lod1 && lod1->is_inside_tree() && lod1->is_visible()) {
-            lod1->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod1, false);
-            }
+        if (lod2_showing) {
+            show_lod(lod2, false);
         }
-        if (lod2 && lod2->is_inside_tree() && lod2->is_visible()) {
-            lod2->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod2, false);
-            }
-        }
-    } else if (lod2 && lod2->is_inside_tree() && lod2dist * globalDistMult * lod2DistMult > 0.0f && distance > lod2dist * globalDistMult * lod2DistMult) {
-        if (lastState == 2) {
+    } else if (lod2_valid && (actual_lod2_distance > 0.0f) && (distance > actual_lod2_distance)) {
+        if (last_state == 2) {
             return;
         }
-        lastState = 2;
-        lod2->show();
-        if (disableProcessing) {
-            call_deferred("setNodeProcessing", lod2, true);
+        last_state = 2;
+        show_lod(lod2, true);
+        if (lod0_showing) {
+            show_lod(lod0, false);
         }
-        if (lod0 && lod0->is_inside_tree() && lod0->is_visible()) {
-            lod0->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod0, false);
-            }
+        if (lod1_showing) {
+            show_lod(lod1, false);
         }
-        if (lod1 && lod1->is_inside_tree() && lod1->is_visible()) {
-            lod1->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod1, false);
-            }
+        if (lod3_showing) {
+            show_lod(lod3, false);
         }
-        if (lod3 && lod3->is_inside_tree() && lod3->is_visible()) {
-            lod3->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod3, false);
-            }
-        }
-    } else if (lod1 && lod1->is_inside_tree() && lod1dist * globalDistMult * lod1DistMult > 0.0f && distance > lod1dist * globalDistMult * lod1DistMult) {
-        if (lastState == 1) {
+    } else if (lod1_valid && (actual_lod1_distance > 0.0f) && (distance > actual_lod1_distance)) {
+        if (last_state == 1) {
             return;
         }
-        lastState = 1;
-        lod1->show();
-        if (disableProcessing) {
-            call_deferred("setNodeProcessing", lod1, true);
+        last_state = 1;
+        show_lod(lod1, true);
+        if (lod0_showing) {
+            show_lod(lod0, false);
         }
-        if (lod0 && lod0->is_inside_tree() && lod0->is_visible()) {
-            lod0->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod0, false);
-            }
+        if (lod2_showing) {
+            show_lod(lod2, false);
         }
-        if (lod2 && lod2->is_inside_tree() && lod2->is_visible()) {
-            lod2->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod2, false);
-            }
+        if (lod3_showing) {
+            show_lod(lod3, false);
         }
-        if (lod3 && lod3->is_inside_tree() && lod3->is_visible()) {
-            lod3->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod3, false);
-            }
-        }
-    } else if (lod0 && lod0->is_inside_tree()) {
-        if (lastState == 0) {
+    } else if (lod0_valid) {
+        if (last_state == 0) {
             return;
         }
-        lastState = 0;
-        lod0->show();
-        if (disableProcessing) {
-            call_deferred("setNodeProcessing", lod0, true);
+        last_state = 0;
+        show_lod(lod0, true);
+        if (lod1_showing) {
+            show_lod(lod1, false);
         }
-        if (lod1 && lod1->is_inside_tree() && lod1->is_visible()) {
-            lod1->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod1, false);
-            }
+        if (lod2_showing) {
+            show_lod(lod2, false);
         }
-        if (lod2 && lod2->is_inside_tree() && lod2->is_visible()) {
-            lod2->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod2, false);
-            }
-        }
-        if (lod3 && lod3->is_inside_tree() && lod3->is_visible()) {
-            lod3->hide();
-            if (disableProcessing) {
-                call_deferred("setNodeProcessing", lod3, false);
-            }
+        if (lod3_showing) {
+            show_lod(lod3, false);
         }
     }
 }
@@ -298,17 +257,17 @@ void LOD::processData(Vector3 cameraLoc) {
 void LOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
     if (!registered && enabled) {
-        attemptRegister(true);
+        try_register(true);
     }
 }
 
-void LOD::setNodeProcessing(Spatial* node, bool state) {
+void LOD::set_node_processing(Spatial* node, bool state) {
     node->set_physics_process(state);
     node->set_process(state);
 }
 
 // Update the distances based on the AABB
-void LOD::updateLodAABB() {
+void LOD::update_lod_AABB() {
     // Get an AABB for all objects
     // Spatials don't have AABB apparently, and it's convenient to have
     // an "empty" 3D object for the LOD objects' parent.
@@ -321,16 +280,16 @@ void LOD::updateLodAABB() {
     }
 
     // Try casting the LOD objects to VisualInstance (that's the only way we can get an AABB!)
-    VisualInstance *lod0VisInst = Object::cast_to<VisualInstance>(lod0);
-    if (!lod0VisInst) {
+    VisualInstance *lod0_visual_instance = Object::cast_to<VisualInstance>(lod0);
+    if (!lod0_visual_instance) {
         printf("%s: ", get_name().alloc_c_string());
         printf("\nLOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)\n");
     }
 
     // Get base AABB using LOD0
-    AABB objAABB = lod0VisInst->get_transformed_aabb();
+    AABB object_AABB = lod0_visual_instance->get_transformed_aabb();
 
-    if (objAABB.has_no_area()) {
+    if (object_AABB.has_no_area()) {
         printf("%s: ", get_name().alloc_c_string());
         printf("\nInvalid AABB for LOD0!\n");
         return;
@@ -338,72 +297,79 @@ void LOD::updateLodAABB() {
 
     // Merge others if available
     if (lod1) {
-        VisualInstance *lod1VisInst = Object::cast_to<VisualInstance>(lod1);
-        if (lod1VisInst) {
-            objAABB = objAABB.merge(lod1VisInst->get_transformed_aabb());
+        VisualInstance *lod1_visual_instance = Object::cast_to<VisualInstance>(lod1);
+        if (lod1_visual_instance) {
+            object_AABB = object_AABB.merge(lod1_visual_instance->get_transformed_aabb());
         }   
     }
     if (lod2) {
-        VisualInstance *lod2VisInst = Object::cast_to<VisualInstance>(lod2);
-        if (lod2VisInst) {
-            objAABB = objAABB.merge(lod2VisInst->get_transformed_aabb());
+        VisualInstance *lod2_visual_instance = Object::cast_to<VisualInstance>(lod2);
+        if (lod2_visual_instance) {
+            object_AABB = object_AABB.merge(lod2_visual_instance->get_transformed_aabb());
         }
     }
     if (lod3) {
-        VisualInstance *lod3VisInst = Object::cast_to<VisualInstance>(lod3);
-        if (lod3VisInst) {
-            objAABB = objAABB.merge(lod3VisInst->get_transformed_aabb());
+        VisualInstance *lod3_visual_instance = Object::cast_to<VisualInstance>(lod3);
+        if (lod3_visual_instance) {
+            object_AABB = object_AABB.merge(lod3_visual_instance->get_transformed_aabb());
         }
     }
 
     // Get the longest axis (conservative estimate of the object size vs screen)
-    float longestAxis = objAABB.get_longest_axis_size();
+    float longest_axis = object_AABB.get_longest_axis_size();
 
     // Use an isosceles triangle to get a worst-case estimate of the distances
     // Don't forget the degrees to radians conversion
-    float tanTheta = tan((FOV * 3.14f / 180.0f) / 2.0f);
+    float tan_theta = tan((fov * 3.14f / 180.0f) / 2.0f);
 
     // Get the distances at which we have the LOD ratios of the screen
-    lod1dist = ((longestAxis / (lod1ratio / 100.0f)) / (2.0f * tanTheta));
-    lod2dist = ((longestAxis / (lod2ratio / 100.0f)) / (2.0f * tanTheta));
-    lod3dist = ((longestAxis / (lod3ratio / 100.0f)) / (2.0f * tanTheta));
-    hideDist = ((longestAxis / (hideRatio / 100.0f)) / (2.0f * tanTheta));
+    lod1_distance = ((longest_axis / (lod1_ratio / 100.0f)) / (2.0f * tan_theta));
+    lod2_distance = ((longest_axis / (lod2_ratio / 100.0f)) / (2.0f * tan_theta));
+    lod3_distance = ((longest_axis / (lod3_ratio / 100.0f)) / (2.0f * tan_theta));
+    hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
 
     // Get the offset of the parent position and the overall AABB
-    transformOffsetAABB = get_global_transform().origin - (objAABB.get_endpoint(0) + objAABB.size / 2.0f);
+    transform_offset_AABB = get_global_transform().origin - (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f));
 }
 
-void LOD::updateLodMultipliersFromManager() {
-    if (affectedByDistanceMultipliers) {
-        Node* LODManagerNode = get_node("/root/LodManager");
-        globalDistMult = LODManagerNode->get("globalDistMult");
-        lod1DistMult = LODManagerNode->get("lod1DistMult");
-        lod2DistMult = LODManagerNode->get("lod2DistMult");
-        lod3DistMult = LODManagerNode->get("lod3DistMult");
-        hideDistMult = LODManagerNode->get("hideDistMult");
-        unloadDistMult = LODManagerNode->get("unloadDistMult");
+void LOD::update_lod_multipliers_from_manager() {
+    if (affected_by_distance_multipliers) {
+        Node* LOD_manager_node = get_node("/root/LodManager");
+        global_distance_multiplier = LOD_manager_node->get("global_distance_multiplier");
+        lod1_distance_multiplier = LOD_manager_node->get("lod1_distance_multiplier");
+        lod2_distance_multiplier = LOD_manager_node->get("lod2_distance_multiplier");
+        lod3_distance_multiplier = LOD_manager_node->get("lod3_distance_multiplier");
+        hide_distance_multiplier = LOD_manager_node->get("hide_distance_multiplier");
+        unload_distance_multiplier = LOD_manager_node->get("unload_distance_multiplier");
     } else {
-        globalDistMult = 1.0f;
-        lod1DistMult = 1.0f;
-        lod2DistMult = 1.0f;
-        lod3DistMult = 1.0f;
-        hideDistMult = 1.0f;
-        unloadDistMult = 1.0f;
+        global_distance_multiplier = 1.0f;
+        lod1_distance_multiplier = 1.0f;
+        lod2_distance_multiplier = 1.0f;
+        lod2_distance_multiplier = 1.0f;
+        hide_distance_multiplier = 1.0f;
+        unload_distance_multiplier = 1.0f;
     }
 }
 
-bool LOD::attemptRegister(bool state) {
+bool LOD::try_register(bool state) {
     if (get_node("/root/LodManager")) {
         if (state) {
-            get_node("/root/LodManager")->call("addObject", (Node*) this);
-            updateLodMultipliersFromManager();
+            get_node("/root/LodManager")->call("add_object", (Node*) this);
+            update_lod_multipliers_from_manager();
             registered = true;
         } else {
-            get_node("/root/LodManager")->call("removeObject", (Node*) this);
+            get_node("/root/LodManager")->call("remove_object", (Node*) this);
             registered = false;
-            interactedWithManager = false;
+            interacted_with_manager = false;
         }
         return true;
     }
     return false;
+}
+
+void LOD::show_lod(Spatial* lod_object, bool show) {
+    show ? lod_object->show() : lod_object->hide();
+    if (disable_processing) {
+        call_deferred("set_node_processing", lod_object, show);
+    }
 }
