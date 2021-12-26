@@ -196,7 +196,7 @@ void LODManager::lod_function() {
                     // Update AABB if needed
                     if ((update_AABBs_flag || !interacted_with_manager) && lod_object_node->get("use_screen_percentage")) {
                         debug_level_print(2, "Telling this LOD object to update its AABBs.\n");
-                        lod_object_node->call("update_lod_AABBs");
+                        lod_object_node->call("update_lod_AABB");
                     }
                     if (!interacted_with_manager) {
                         debug_level_print(2, "Setting this LOD object's interaction with the manager flag to true.\n");
@@ -380,6 +380,8 @@ void LODManager::update_fov() {
         lod_objects_semaphore->wait();
     }
     update_fovs_flag = true;
+    // If we're updating the FOV, the AABB screen percentage will need to be updated, too.
+    update_AABBs_flag = true;
     if (use_multithreading) {
         lod_objects_semaphore->post();
     }

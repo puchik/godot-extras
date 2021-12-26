@@ -17,11 +17,11 @@ func _ready():
 
 func _on_LodMultiplier_text_changed(new_text):
 	ProjectSettings.set_setting("rendering/quality/lod/global_multiplier", new_text as float)
-	get_node("/root/LodManager").updateLodMultipliersFromSettings()
+	get_node("/root/LodManager").update_lod_multipliers_from_settings()
 
 
 func _on_fov_text_changed(new_text):
 	camera.fov = new_text as float
-	get_node("/root/LodManager").updateFOV()
-	get_node("/root/LodManager").updateLodAABBs()
-	pass # Replace with function body.
+	get_node("/root/LodManager").update_fov()
+	get_node("/root/LodManager").update_lod_AABBs()
+	get_node("/root/LodManager").set_camera(get_viewport().get_camera())

@@ -130,18 +130,42 @@ public:
     int objects_per_frame = 10000;
 };
 
-//// Object based LOD ----------------------------------------------------------------------------------
-class LOD : public VisualInstance {
-    GODOT_CLASS(LOD, VisualInstance)
-
-private:
-    float tick_speed = 0.2f;
+//// Some base LOD variables. --------------------------------------------------------------------------
+// Shared common functions are separate.
+// It would be better to have a base class for all of them but that seems to cause a 
+// multiple inheritance calamity that Godot doesn't like.
+class LODBaseVariables {
+    GODOT_CLASS(LODBaseVariables, Object)
+public:
     bool enabled = true; // Switch to false if we want to turn off LOD functionality
     bool registered = false; // Whether the manager knows we exist
-    bool try_register(bool state); // Register or unregister the object. Returns success or fail
     // Dirty bit. Indicates if the LOD manager has had any contact with this object
     bool interacted_with_manager = false;
 
+    // Distance by screen percentage
+    // Use a conservative/worst-case method for getting the size of the object
+    // relative to the screen (largest AABB axis on both viewport axes)
+    bool use_screen_percentage = true;
+    float fov; // Need FOV for getting screen percentages
+    bool affected_by_distance_multipliers = true;
+
+    LODBaseVariables();
+    ~LODBaseVariables();
+};
+
+//// Shared LOD functions ------------------------------------------------------------------------------
+// Would have liked to have more shared functions, but... see comment above LODBaseVariables...
+class LODCommonFunctions {
+public:
+    static bool try_register(Node* node, bool state); // Register or unregister the object. Returns success or fail
+    static float lod_calculate_AABB_distance_tan_theta(float fov);
+};
+
+//// Object based LOD ----------------------------------------------------------------------------------
+class LOD : public VisualInstance, public LODBaseVariables {
+    GODOT_CLASS(LOD, VisualInstance)
+
+private:
     // Distance by metres
     // These will be set by the ratios below if use_screen_percentage is true
     float lod1_distance = 7.0f; // put any of these to -1 if you don't have a lod or don't want to unload etc
@@ -153,7 +177,6 @@ private:
     // Distance by screen percentage
     // Use a conservative/worst-case method for getting the size of the object
     // relative to the screen (largest AABB axis on both viewport axes)
-    bool use_screen_percentage = true;
     float lod1_ratio = 25.0f;
     float lod2_ratio = 10.0f;
     float lod3_ratio = 5.5f;
@@ -161,9 +184,6 @@ private:
     float unload_ratio = -1.0f;
 
     bool disable_processing = false;
-
-    // Prevents calling the process_data function too fast from the main loop
-    bool already_running = false;
 
     // Keep track of last state to avoid unnecessary show/hide/process toggle calls
     int last_state = -1;
@@ -178,15 +198,11 @@ private:
     Spatial* lod2 = NULL;
     Spatial* lod3 = NULL;
 
-    float fov; // Need FOV for getting screen percentages
-
     // Let's use the AABB centre for the centre of the object instead of
     // the parent's centre (if applicable). Instead of constantly 
     // accessing AABB, just store an offset.
     Vector3 transform_offset_AABB;
 
-    ProjectSettings* project_settings;
-    bool affected_by_distance_multipliers = true;
     float global_distance_multiplier = 1.0f;
     float lod1_distance_multiplier = 1.0f;
     float lod2_distance_multiplier = 1.0f;
@@ -211,22 +227,14 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
-    void update_fov(); // Need FOV for getting screen percentages
     void show_lod(Spatial* lod_object, bool show); // Show or hide a LOD Spatial
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
-class LightLOD : public Light {
+class LightLOD : public Light, public LODBaseVariables {
     GODOT_CLASS(LightLOD, Light)
 
 private:
-    float tick_speed = 0.5f;
-    bool enabled = true; // Switch to false if we want to turn off LOD functionality
-    bool registered = false; // Whether the manager knows we exist
-    bool try_register(bool state); // Register or unregister the object. Returns success or fail
-    // Dirty bit. Indicates if the LOD manager has had any contact with this object
-    bool interacted_with_manager = false;
-
     float shadow_distance = 20.0f;
     float hide_distance = 80.0f; // -1 to never hide
     float fade_range = 5.0f; // For ex, the intensity of the shadow will adjust from 0 to 1 between [shadow_distance - fade_range, shadow_distance]
@@ -250,8 +258,6 @@ private:
     void fade_light(float delta);
     void fade_shadow(float delta);
 
-    ProjectSettings* project_settings;
-    bool affected_by_distance_multipliers = true;
     float global_distance_multiplier = 1.0f;
     float shadow_distance_multiplier = 1.0f;
 
@@ -270,21 +276,13 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... we have the option to
     void update_lod_AABB(); // Update AABB only if necessary
-    void update_fov(); // Need FOV for getting screen percentages
 };
 
 //// GIProbe LOD -------------------------------------------------------------------
-class GIProbeLOD : public GIProbe  {
+class GIProbeLOD : public GIProbe, public LODBaseVariables  {
     GODOT_CLASS(GIProbeLOD, GIProbe)
 
 private:
-    float tick_speed = 0.1f;
-    bool enabled = true; // Switch to false if we want to turn off LOD functionality
-    bool registered = false; // Whether the manager knows we exist
-    bool try_register(bool state); // Register or unregister the object. Returns success or fail
-    // Dirty bit. Indicates if the LOD manager has had any contact with this object
-    bool interacted_with_manager = false;
-
     float hide_distance = 80.0f;
     float fade_range = 5.0f; // The energy of the probe will adjust from 0 to 1 between [unload_distance - fade_range, unload_distance]
 
@@ -302,8 +300,6 @@ private:
 
     float fov; // Need FOV for getting screen percentages
 
-    ProjectSettings* project_settings;
-    bool affected_by_distance_multipliers = true;
     float global_distance_multiplier = 1.0f;
 
 public:
@@ -321,21 +317,13 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
-    void update_fov(); // Need FOV for getting screen percentages
 };
 
 //// MultiMeshInstance LOD -------------------------------------------------------------------
-class MultiMeshLOD : public MultiMeshInstance  {
+class MultiMeshLOD : public MultiMeshInstance, public LODBaseVariables  {
     GODOT_CLASS(MultiMeshLOD, MultiMeshInstance)
 
 private:
-    float tick_speed = 0.5f;
-    bool enabled = true; // Switch to false if we want to turn off LOD functionality
-    bool registered = false; // Whether the manager knows we exist
-    bool try_register(bool state); // Register or unregister the object. Returns success or fail
-    // Dirty bit. Indicates if the LOD manager has had any contact with this object
-    bool interacted_with_manager = false;
-
     float min_distance = 5.0f; // At this distance, or below, we see max number of multimesh count
     float max_distance = 80.0f; // At this distance, or above, we see min (or none) number of multimesh count
 
@@ -356,8 +344,6 @@ private:
 
     float fov; // Need FOV for getting screen percentages
 
-    ProjectSettings* project_settings;
-    bool affected_by_distance_multipliers = true;
     float global_distance_multiplier = 1.0f;
 
     MultiMesh* multimesh;
@@ -377,7 +363,6 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
-    void update_fov(); // Need FOV for getting screen percentages
 };
 
 }

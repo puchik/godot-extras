@@ -29,15 +29,14 @@ void LOD::_register_methods() {
     register_property<LOD, float>("lod3ratio", &LOD::lod3_ratio, 5.5f);
     register_property<LOD, float>("hideRatio", &LOD::hide_ratio, 1.0f);
     register_property<LOD, float>("unloadRatio", &LOD::unload_ratio, -1.0f);
-    register_property<LOD, float>("fov", &LOD::fov, 70.0f);
+    register_property<LOD, float>("fov", &LOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<LOD, bool>("registered", &LOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("interacted_with_manager", &LOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     
     // Whether to use distance multipliers from project settings
     register_property<LOD, bool>("affected_by_distance_multipliers", &LOD::affected_by_distance_multipliers, true);
 
     register_property<LOD, bool>("disable_processing", &LOD::disable_processing, false); // Hide the node as well as disabling its _process and _physics_process
-
-    register_property<LOD, float>("tick_speed", &LOD::tick_speed, 0.2f);
 
     register_property<LOD, NodePath>("lod0_path", &LOD::lod0_path, NodePath());
     register_property<LOD, NodePath>("lod1_path", &LOD::lod1_path, NodePath());
@@ -58,9 +57,9 @@ void LOD::_init() {
 }
 
 void LOD::_exit_tree() {
-    // Leave LOD manager's list
+    // Leave LOD manager's list.
     enabled = false;
-    try_register(false);
+    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
 }
 
 void LOD::_ready() {
@@ -131,10 +130,7 @@ void LOD::_ready() {
         }
     }
 
-    // FOV and AABB initial set up is done by the manager
-
-    // Tell the LOD manager that we want to be part of the LOD list
-    try_register(true);
+    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
 }
 
 void LOD::process_data(Vector3 camera_location) {
@@ -257,7 +253,7 @@ void LOD::process_data(Vector3 camera_location) {
 void LOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
     if (!registered && enabled) {
-        try_register(true);
+        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
     }
 }
 
@@ -320,7 +316,7 @@ void LOD::update_lod_AABB() {
 
     // Use an isosceles triangle to get a worst-case estimate of the distances
     // Don't forget the degrees to radians conversion
-    float tan_theta = tan((fov * 3.14f / 180.0f) / 2.0f);
+    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
 
     // Get the distances at which we have the LOD ratios of the screen
     lod1_distance = ((longest_axis / (lod1_ratio / 100.0f)) / (2.0f * tan_theta));
@@ -333,7 +329,7 @@ void LOD::update_lod_AABB() {
 }
 
 void LOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers) {
+    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
         Node* LOD_manager_node = get_node("/root/LodManager");
         global_distance_multiplier = LOD_manager_node->get("global_distance_multiplier");
         lod1_distance_multiplier = LOD_manager_node->get("lod1_distance_multiplier");
@@ -349,22 +345,6 @@ void LOD::update_lod_multipliers_from_manager() {
         hide_distance_multiplier = 1.0f;
         unload_distance_multiplier = 1.0f;
     }
-}
-
-bool LOD::try_register(bool state) {
-    if (get_node("/root/LodManager")) {
-        if (state) {
-            get_node("/root/LodManager")->call("add_object", (Node*) this);
-            update_lod_multipliers_from_manager();
-            registered = true;
-        } else {
-            get_node("/root/LodManager")->call("remove_object", (Node*) this);
-            registered = false;
-            interacted_with_manager = false;
-        }
-        return true;
-    }
-    return false;
 }
 
 void LOD::show_lod(Spatial* lod_object, bool show) {

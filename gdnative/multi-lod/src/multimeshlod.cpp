@@ -23,7 +23,8 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, bool>("use_screen_percentage", &MultiMeshLOD::use_screen_percentage, true);
     register_property<MultiMeshLOD, float>("minRatio", &MultiMeshLOD::min_ratio, 2.0f);
     register_property<MultiMeshLOD, float>("maxRatio", &MultiMeshLOD::max_ratio, 5.0f);
-    register_property<MultiMeshLOD, float>("fov", &MultiMeshLOD::fov, 70.0f);
+    register_property<MultiMeshLOD, float>("fov", &MultiMeshLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<MultiMeshLOD, bool>("registered", &MultiMeshLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("interacted_with_manager", &MultiMeshLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
@@ -34,8 +35,6 @@ void MultiMeshLOD::_register_methods() {
 
     register_property<MultiMeshLOD, float>("fade_speed", &MultiMeshLOD::fade_speed, 1.0f);
     register_property<MultiMeshLOD, float>("fade_exponent", &MultiMeshLOD::fade_exponent, 1.0f);
-
-    register_property<MultiMeshLOD, float>("tickSpeed", &MultiMeshLOD::tick_speed, 0.1f);
 
     register_property<MultiMeshLOD, bool>("enabled", &MultiMeshLOD::enabled, true);
 }
@@ -51,9 +50,9 @@ void MultiMeshLOD::_init() {
 }
 
 void MultiMeshLOD::_exit_tree() {
-    // Leave LOD manager's list
+    // Leave LOD manager's list.
     enabled = false;
-    try_register(false);
+    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
 }
 
 void MultiMeshLOD::_ready() {
@@ -70,10 +69,7 @@ void MultiMeshLOD::_ready() {
     }
     target_count = max_count;
 
-    // FOV and AABB initial set up is done by the manager
-
-    // Tell the LOD manager that we want to be part of the LOD list
-    try_register(true);
+    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
 }
 
 void MultiMeshLOD::process_data(Vector3 camera_location) {
@@ -101,7 +97,7 @@ void MultiMeshLOD::process_data(Vector3 camera_location) {
 void MultiMeshLOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
     if (!registered && enabled) {
-        try_register(true);
+        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
     }
 
     // Lerp visible instance count if needed
@@ -141,7 +137,7 @@ void MultiMeshLOD::update_lod_AABB() {
     float longest_axis = object_AABB.get_longest_axis_size();
 
     // Use an isosceles triangle to get a worst-case estimate of the distances
-    float tan_theta = tan((fov * 3.14f / 180.0f));
+    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
 
     // Get the distances at which we have the LOD ratios of the screen
     min_distance = ((longest_axis / (max_ratio / 100.0f)) / (2.0f * tan_theta));
@@ -149,26 +145,10 @@ void MultiMeshLOD::update_lod_AABB() {
 }
 
 void MultiMeshLOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers) {
+    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
         Node* lod_manager_node = get_node("/root/LodManager");
         global_distance_multiplier = lod_manager_node->get("global_distance_multiplier");
     } else {
         global_distance_multiplier = 1.0f;
     }
-}
-
-bool MultiMeshLOD::try_register(bool state) {
-    if (get_node("/root/LodManager")) {
-        if (state) {
-            get_node("/root/LodManager")->call("add_object", (Node*) this);
-            update_lod_multipliers_from_manager();
-            registered = true;
-        } else {
-            get_node("/root/LodManager")->call("remove_object", (Node*) this);
-            registered = false;
-            interacted_with_manager = false;
-        }
-        return true;
-    }
-    return false;
 }

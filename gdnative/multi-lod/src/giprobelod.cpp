@@ -21,15 +21,14 @@ void GIProbeLOD::_register_methods() {
     // Screen percentage ratios (and if applicable)
     register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::use_screen_percentage, true);
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
-    register_property<GIProbeLOD, float>("fov", &GIProbeLOD::fov, 70.0f);
+    register_property<GIProbeLOD, float>("fov", &GIProbeLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<GIProbeLOD, bool>("registered", &GIProbeLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("interacted_with_manager", &GIProbeLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
     register_property<GIProbeLOD, bool>("affected_by_distance_multipliers", &GIProbeLOD::affected_by_distance_multipliers, true);
 
     register_property<GIProbeLOD, float>("fade_speed", &GIProbeLOD::fade_speed, 1.0f);
-
-    register_property<GIProbeLOD, float>("tick_speed", &GIProbeLOD::tick_speed, 0.5f);
 
     register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::enabled, true);
 }
@@ -44,8 +43,9 @@ void GIProbeLOD::_init() {
 }
 
 void GIProbeLOD::_exit_tree() {
-    // Leave LOD manager's list
-    try_register(false);
+    // Leave LOD manager's list.
+    enabled = false;
+    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
 }
 
 void GIProbeLOD::_ready() {
@@ -60,10 +60,7 @@ void GIProbeLOD::_ready() {
     probe_base_energy = get_energy();
     probe_target_energy = probe_base_energy;
 
-    // FOV and AABB initial set up is done by the manager
-
-    // Tell the LOD manager that we want to be part of the LOD list
-    try_register(true);
+    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
 }
 
 void GIProbeLOD::process_data(Vector3 camera_location) {
@@ -91,7 +88,7 @@ void GIProbeLOD::process_data(Vector3 camera_location) {
 void GIProbeLOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
     if (!registered && enabled) {
-        try_register(true);
+        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
     }
 
     // Fade GIProbe if needed
@@ -125,33 +122,17 @@ void GIProbeLOD::update_lod_AABB() {
     float longest_axis = objAABB.get_longest_axis_size();
 
     // Use an isosceles triangle to get a worst-case estimate of the distances
-    float tan_theta = tan((fov * 3.14f / 180.0f));
+    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
 
     // Get the distances at which we have the LOD ratios of the screen
     hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
 }
 
 void GIProbeLOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers) {
+    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
         Node* lod_manager_node = get_node("/root/LodManager");
         global_distance_multiplier = lod_manager_node->get("global_distance_multiplier");
     } else {
         global_distance_multiplier = 1.0f;
     }
-}
-
-bool GIProbeLOD::try_register(bool state) {
-    if (get_node("/root/LodManager")) {
-        if (state) {
-            get_node("/root/LodManager")->call("add_object", (Node*) this);
-            update_lod_multipliers_from_manager();
-            registered = true;
-        } else {
-            get_node("/root/LodManager")->call("remove_object", (Node*) this);
-            registered = false;
-            interacted_with_manager = false;
-        }
-        return true;
-    }
-    return false;
 }
