@@ -1,0 +1,30 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=2]
+
+[ext_resource path="res://shaders/snow_branch.shader" type="Shader" id=1]
+[ext_resource path="res://textures/tree/branch.png" type="Texture" id=2]
+[ext_resource path="res://textures/snow/snow_02_nor_gl_1k.jpg" type="Texture" id=3]
+[ext_resource path="res://textures/snow/snow_02_diff_2k.jpg" type="Texture" id=4]
+[ext_resource path="res://textures/tree/branch_normal.jpg" type="Texture" id=5]
+
+[resource]
+shader = ExtResource( 1 )
+shader_param/snow_thershold = 0.915
+shader_param/snow_blend_range = 0.1
+shader_param/specular = 0.5
+shader_param/metallic = 0.0
+shader_param/albedo = Color( 1, 1, 1, 1 )
+shader_param/alpha_cutout = 0.078
+shader_param/transmission = 0.396
+shader_param/normal_scale = 1.0
+shader_param/roughness = 1.0
+shader_param/albedo_snow = Color( 1, 1, 1, 1 )
+shader_param/normal_scale_snow = 1.0
+shader_param/roughness_snow = 0.789
+shader_param/uv1_scale = Vector3( 1, 1, 1 )
+shader_param/uv1_offset = Vector3( 0, 0, 0 )
+shader_param/uv2_scale = Vector3( 1, 1, 1 )
+shader_param/uv2_offset = Vector3( 0, 0, 0 )
+shader_param/texture_albedo = ExtResource( 2 )
+shader_param/texture_normal = ExtResource( 5 )
+shader_param/texture_albedo_snow = ExtResource( 4 )
+shader_param/texture_normal_snow = ExtResource( 3 )
