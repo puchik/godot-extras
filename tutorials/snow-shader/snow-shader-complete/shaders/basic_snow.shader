@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
 
-uniform float snow_thershold : hint_range(0, 1.1) = 0.6;
+uniform float snow_threshold : hint_range(0, 1.1) = 0.6;
 uniform float snow_blend_range : hint_range(0, 0.9) = 0.1;
 
 uniform float specular = 0.5;
@@ -58,7 +58,7 @@ void fragment() {
 	
 	// Calculate blend factor
 	float snow_coeff = normalize(TBN * (normal_tex * 2.0 - vec3(1.0))).y;
-	float blend_factor = smoothstep(snow_thershold - snow_blend_range, snow_thershold + snow_blend_range, snow_coeff);
+	float blend_factor = smoothstep(snow_threshold - snow_blend_range, snow_threshold + snow_blend_range, snow_coeff);
 	
 	// Blend textures
 	vec3 final_albedo = mix(albedo_total, albedo_total_snow, blend_factor);
