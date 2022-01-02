@@ -416,6 +416,7 @@ bool LODManager::set_camera(Node* given_node) {
     camera_node = Object::cast_to<Camera>(given_node);
     if (camera_node) {
         camera = camera_node;
+        update_fov();
         return true;
     } else {
         printf("Camera provided in setCamera of LODManager was not valid.\n");

@@ -5,6 +5,7 @@ using namespace godot;
 void GIProbeLOD::_register_methods() {
     register_method("_process", &GIProbeLOD::_process);
     register_method("_ready", &GIProbeLOD::_ready);
+    register_method("_enter_tree", &GIProbeLOD::_enter_tree);
     register_method("_exit_tree", &GIProbeLOD::_exit_tree);
     register_method("process_data", &GIProbeLOD::process_data);
 
@@ -23,6 +24,7 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
     register_property<GIProbeLOD, float>("fov", &GIProbeLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("registered", &GIProbeLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<GIProbeLOD, bool>("ready_finished", &GIProbeLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("interacted_with_manager", &GIProbeLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
@@ -48,6 +50,14 @@ void GIProbeLOD::_exit_tree() {
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
 }
 
+void GIProbeLOD::_enter_tree() {
+    // Ready and not registered? Probably re-entered the tree and need to re-regster.
+    if (!registered && ready_finished) {
+        enabled = true;
+        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    }
+}
+
 void GIProbeLOD::_ready() {
     if (get_class() != "GIProbe") {
         printf("%s: ", get_name().alloc_c_string());
@@ -61,6 +71,7 @@ void GIProbeLOD::_ready() {
     probe_target_energy = probe_base_energy;
 
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    ready_finished = true;
 }
 
 void GIProbeLOD::process_data(Vector3 camera_location) {

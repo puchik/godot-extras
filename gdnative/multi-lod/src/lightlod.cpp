@@ -5,6 +5,7 @@ using namespace godot;
 void LightLOD::_register_methods() {
     register_method("_process", &LightLOD::_process);
     register_method("_ready", &LightLOD::_ready);
+    register_method("_enter_tree", &LightLOD::_enter_tree);
     register_method("_exit_tree", &LightLOD::_exit_tree);
     register_method("process_data", &LightLOD::process_data);
 
@@ -25,6 +26,7 @@ void LightLOD::_register_methods() {
     register_property<LightLOD, float>("hideRatio", &LightLOD::hide_ratio, 2.0f);
     register_property<LightLOD, float>("fov", &LightLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LightLOD, bool>("registered", &LightLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<LightLOD, bool>("ready_finished", &LightLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LightLOD, bool>("interacted_with_manager", &LightLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
@@ -51,6 +53,14 @@ void LightLOD::_exit_tree() {
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
 }
 
+void LightLOD::_enter_tree() {
+    // Ready and not registered? Probably re-entered the tree and need to re-regster.
+    if (!registered && ready_finished) {
+        enabled = true;
+        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    }
+}
+
 void LightLOD::_ready() {
     if ((get_class() != "OmniLight") && (get_class() != "SpotLight")) {
         printf("%s: ", get_name().alloc_c_string());
@@ -65,6 +75,7 @@ void LightLOD::_ready() {
     shadow_target_color = get_shadow_color();
 
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    ready_finished = true;
 }
 
 void LightLOD::process_data(Vector3 camera_location) {

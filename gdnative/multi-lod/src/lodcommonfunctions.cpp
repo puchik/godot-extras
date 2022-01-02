@@ -12,7 +12,7 @@ bool LODCommonFunctions::try_register(Node* node, bool state) {
         } else {
             node->get_node("/root/LodManager")->call("remove_object", node);
             node->set("registered", false);
-            node->set("interacted_with_manager", true);
+            node->set("interacted_with_manager", false);
         }
         return true;
     }

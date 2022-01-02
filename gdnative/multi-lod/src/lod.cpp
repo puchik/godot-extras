@@ -8,6 +8,7 @@ void LOD::_register_methods() {
     // Godot and thread functions
     register_method("_process", &LOD::_process);
     register_method("_ready", &LOD::_ready);
+    register_method("_enter_tree", &LOD::_enter_tree);
     register_method("_exit_tree", &LOD::_exit_tree);
     register_method("process_data", &LOD::process_data);
     // Exposed methods
@@ -31,6 +32,7 @@ void LOD::_register_methods() {
     register_property<LOD, float>("unloadRatio", &LOD::unload_ratio, -1.0f);
     register_property<LOD, float>("fov", &LOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("registered", &LOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<LOD, bool>("ready_finished", &LOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("interacted_with_manager", &LOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     
     // Whether to use distance multipliers from project settings
@@ -60,6 +62,14 @@ void LOD::_exit_tree() {
     // Leave LOD manager's list.
     enabled = false;
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
+}
+
+void LOD::_enter_tree() {
+    // Ready and not registered? Probably re-entered the tree and need to re-regster.
+    if (!registered && ready_finished) {
+        enabled = true;
+        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    }
 }
 
 void LOD::_ready() {
@@ -131,6 +141,7 @@ void LOD::_ready() {
     }
 
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    ready_finished = true;
 }
 
 void LOD::process_data(Vector3 camera_location) {

@@ -6,6 +6,7 @@ using namespace godot;
 void MultiMeshLOD::_register_methods() {
     register_method("_process", &MultiMeshLOD::_process);
     register_method("_ready", &MultiMeshLOD::_ready);
+    register_method("_enter_tree", &MultiMeshLOD::_enter_tree);
     register_method("_exit_tree", &MultiMeshLOD::_exit_tree);
     register_method("process_data", &MultiMeshLOD::process_data);
 
@@ -25,6 +26,7 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, float>("maxRatio", &MultiMeshLOD::max_ratio, 5.0f);
     register_property<MultiMeshLOD, float>("fov", &MultiMeshLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("registered", &MultiMeshLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
+    register_property<MultiMeshLOD, bool>("ready_finished", &MultiMeshLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("interacted_with_manager", &MultiMeshLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     // Whether to use distance multipliers from project settings
@@ -55,6 +57,14 @@ void MultiMeshLOD::_exit_tree() {
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
 }
 
+void MultiMeshLOD::_enter_tree() {
+    // Ready and not registered? Probably re-entered the tree and need to re-regster.
+    if (!registered && ready_finished) {
+        enabled = true;
+        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    }
+}
+
 void MultiMeshLOD::_ready() {
     if (get_class() != "MultiMeshInstance") {
         printf("%s: ", get_name().alloc_c_string());
@@ -70,6 +80,7 @@ void MultiMeshLOD::_ready() {
     target_count = max_count;
 
     LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    ready_finished = true;
 }
 
 void MultiMeshLOD::process_data(Vector3 camera_location) {

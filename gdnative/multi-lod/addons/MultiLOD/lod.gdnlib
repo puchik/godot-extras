@@ -1,0 +1,14 @@
+[general]
+
+reloadable=true
+singleton=false
+load_once=true
+symbol_prefix="gdn_multi_lod_"
+
+[entry]
+
+Windows.64="res://addons/MultiLOD/bin/win64/lod.dll"
+
+[dependencies]
+
+Windows.64=[  ]

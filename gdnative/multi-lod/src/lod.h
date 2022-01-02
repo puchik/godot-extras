@@ -139,8 +139,11 @@ class LODBaseVariables {
 public:
     bool enabled = true; // Switch to false if we want to turn off LOD functionality
     bool registered = false; // Whether the manager knows we exist
-    // Dirty bit. Indicates if the LOD manager has had any contact with this object
+    // Dirty bit. Indicates if the LOD manager has had any contact with this object (other than registration)
     bool interacted_with_manager = false;
+    // Set to true after _ready runs. We need to reliably know if all setup including children has been completed
+    // in case we're leaving and exiting the tree without being freed/deleted.
+    bool ready_finished = false;
 
     // Distance by screen percentage
     // Use a conservative/worst-case method for getting the size of the object
@@ -221,6 +224,7 @@ public:
     void _init(); // our initializer called by Godot
 
     void _ready();
+    void _enter_tree();
     void _process(float delta);
     void _exit_tree();
     void process_data(Vector3 camera_location);
@@ -270,6 +274,7 @@ public:
     void _init(); // our initializer called by Godot
 
     void _ready();
+    void _enter_tree();
     void _process(float delta);
     void _exit_tree();
     void process_data(Vector3 camera_location);
@@ -311,6 +316,7 @@ public:
     void _init(); // our initializer called by Godot
 
     void _ready();
+    void _enter_tree();
     void _process(float delta);
     void _exit_tree();
     void process_data(Vector3 camera_location);
@@ -357,6 +363,7 @@ public:
     void _init(); // our initializer called by Godot
 
     void _ready();
+    void _enter_tree();
     void _process(float delta);
     void _exit_tree();
     void process_data(Vector3 camera_location);
