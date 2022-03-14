@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=27 format=2]
 
 [ext_resource path="res://camera.gd" type="Script" id=1]
 [ext_resource path="res://Items/LightPole.tscn" type="PackedScene" id=2]
@@ -7,14 +7,38 @@
 [ext_resource path="res://Items/Cube.tscn" type="PackedScene" id=5]
 [ext_resource path="res://addons/MultiLOD/multimesh_lod.gdns" type="Script" id=6]
 [ext_resource path="res://Controls.gd" type="Script" id=7]
+[ext_resource path="res://addons/MultiLOD/lod.gdns" type="Script" id=8]
 
-[sub_resource type="CubeMesh" id=1]
+[sub_resource type="SpatialMaterial" id=1]
+albedo_color = Color( 0.133333, 1, 0, 1 )
+
+[sub_resource type="CylinderMesh" id=11]
+height = 1.25
+
+[sub_resource type="SpatialMaterial" id=3]
+albedo_color = Color( 0, 0.890196, 1, 1 )
+
+[sub_resource type="SphereMesh" id=12]
+
+[sub_resource type="SpatialMaterial" id=4]
+albedo_color = Color( 1, 0.929412, 0, 1 )
+
+[sub_resource type="CubeMesh" id=13]
+size = Vector3( 1.25, 1.25, 1.25 )
+
+[sub_resource type="SpatialMaterial" id=5]
+albedo_color = Color( 1, 0, 0, 1 )
+
+[sub_resource type="PrismMesh" id=14]
+size = Vector3( 1.5, 1.5, 1.5 )
+
+[sub_resource type="CubeMesh" id=15]
 size = Vector3( 60, 0.2, 60 )
 
 [sub_resource type="CubeMesh" id=2]
 size = Vector3( 1, 2, 60 )
 
-[sub_resource type="GIProbeData" id=3]
+[sub_resource type="GIProbeData" id=16]
 bounds = AABB( -6, -5, -6, 12, 10, 12 )
 cell_size = 0.1875
 to_cell_xform = Transform( 5.33333, 0, 0, 0, 5.33333, 0, 0, 0, 5.33333, 32, 26.6667, 32 )
@@ -24,10 +48,10 @@ bias = 1.5
 normal_bias = 0.0
 propagation = 0.7
 
-[sub_resource type="CubeMesh" id=4]
+[sub_resource type="CubeMesh" id=17]
 size = Vector3( 10, 0.2, 10 )
 
-[sub_resource type="SpatialMaterial" id=5]
+[sub_resource type="SpatialMaterial" id=18]
 albedo_color = Color( 0.247059, 0.847059, 1, 1 )
 emission_enabled = true
 emission = Color( 0.278431, 0.901961, 1, 1 )
@@ -96,21 +120,11 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="UnfocusLineEdits" type="Button" parent="Controls"]
-margin_left = 5.0
-margin_top = 80.0
-margin_right = 150.0
-rect_pivot_offset = Vector2( 85.1975, 7 )
-text = "Unfocus text inputs"
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
 [node name="GIProbeNote" type="Label" parent="Controls"]
 margin_left = 7.0
-margin_top = 126.0
+margin_top = 100.0
 margin_right = 217.0
-margin_bottom = 185.0
+margin_bottom = 165.0
 rect_pivot_offset = Vector2( 85.1975, 7 )
 text = "GIProbe LOD only makes sense if you have the ambient light blending patch or you have no ambient light"
 autowrap = true
@@ -250,6 +264,75 @@ lod1ratio = 25.0
 lod2ratio = 10.0
 lod3ratio = 5.5
 
+[node name="ShadowImpostors" type="Spatial" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2.06147, 0, -19.5457 )
+
+[node name="UsingImpostor" type="ImmediateGeometry" parent="ShadowImpostors"]
+script = ExtResource( 8 )
+lod3dist = 24.0
+use_screen_percentage = false
+max_shadow_caster = 2
+
+[node name="LOD0" type="MeshInstance" parent="ShadowImpostors/UsingImpostor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+material_override = SubResource( 1 )
+mesh = SubResource( 11 )
+material/0 = null
+
+[node name="LOD1" type="MeshInstance" parent="ShadowImpostors/UsingImpostor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+visible = false
+material_override = SubResource( 3 )
+mesh = SubResource( 12 )
+material/0 = null
+
+[node name="LOD2" type="MeshInstance" parent="ShadowImpostors/UsingImpostor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+visible = false
+material_override = SubResource( 4 )
+mesh = SubResource( 13 )
+material/0 = null
+
+[node name="LOD3" type="MeshInstance" parent="ShadowImpostors/UsingImpostor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+visible = false
+material_override = SubResource( 5 )
+mesh = SubResource( 14 )
+material/0 = null
+
+[node name="Without" type="ImmediateGeometry" parent="ShadowImpostors"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -3.38475, 0, 0 )
+script = ExtResource( 8 )
+lod3dist = 24.0
+use_screen_percentage = false
+
+[node name="LOD0" type="MeshInstance" parent="ShadowImpostors/Without"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+material_override = SubResource( 1 )
+mesh = SubResource( 11 )
+material/0 = null
+
+[node name="LOD1" type="MeshInstance" parent="ShadowImpostors/Without"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+visible = false
+material_override = SubResource( 3 )
+mesh = SubResource( 12 )
+material/0 = null
+
+[node name="LOD2" type="MeshInstance" parent="ShadowImpostors/Without"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+visible = false
+material_override = SubResource( 4 )
+mesh = SubResource( 13 )
+material/0 = null
+
+[node name="LOD3" type="MeshInstance" parent="ShadowImpostors/Without"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
+visible = false
+material_override = SubResource( 5 )
+mesh = SubResource( 14 )
+material/0 = null
+
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.24738, 0 )
 fov = 80.0
@@ -257,7 +340,7 @@ far = 250.0
 script = ExtResource( 1 )
 
 [node name="Floor" type="MeshInstance" parent="."]
-mesh = SubResource( 1 )
+mesh = SubResource( 15 )
 material/0 = null
 
 [node name="Wall" type="MeshInstance" parent="."]
@@ -269,24 +352,24 @@ material/0 = null
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 44.5005 )
 subdiv = 0
 extents = Vector3( 6, 5, 6 )
-data = SubResource( 3 )
+data = SubResource( 16 )
 script = ExtResource( 4 )
 
 [node name="OtherPlatform" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 44.5921 )
 use_in_baked_light = true
-mesh = SubResource( 4 )
+mesh = SubResource( 17 )
 material/0 = null
 
 [node name="Wall" type="MeshInstance" parent="OtherPlatform"]
 transform = Transform( 1, 0, 0, 0, -3.75673e-08, 0.85944, 0, -1, -4.37114e-08, 0, 0, 1.283 )
 use_in_baked_light = true
-mesh = SubResource( 4 )
+mesh = SubResource( 17 )
 material/0 = null
 
 [node name="GlowingCube" type="MeshInstance" parent="OtherPlatform"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.579333, 0 )
-material_override = SubResource( 5 )
+material_override = SubResource( 18 )
 use_in_baked_light = true
 mesh = SubResource( 6 )
 material/0 = null
@@ -294,7 +377,7 @@ material/0 = null
 [node name="GrassSurface" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -18.0561, 0.172188, 21.2357 )
 material_override = SubResource( 7 )
-mesh = SubResource( 4 )
+mesh = SubResource( 17 )
 material/0 = null
 
 [node name="Grass" type="MultiMeshInstance" parent="GrassSurface"]
@@ -311,6 +394,7 @@ material/0 = null
 transform = Transform( 1, 0, 0, 0, 0.837833, 0.545927, 0, -0.545927, 0.837833, 0, 0, 0 )
 light_energy = 0.5
 shadow_enabled = true
+directional_shadow_max_distance = 200.0
 
-[connection signal="text_changed" from="Controls/GlobalLODText/LineEdit" to="Controls" method="_on_LodMultiplier_text_changed"]
-[connection signal="text_changed" from="Controls/Camera FOV/LineEdit" to="Controls" method="_on_fov_text_changed"]
+[connection signal="text_entered" from="Controls/GlobalLODText/LineEdit" to="Controls" method="_on_LodMultiplier_text_entered"]
+[connection signal="text_entered" from="Controls/Camera FOV/LineEdit" to="Controls" method="_on_fov_text_entered"]
