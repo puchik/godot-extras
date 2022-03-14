@@ -15,8 +15,8 @@ opts.Add(PathVariable('target_path', 'The path where the lib is installed.', 'ad
 opts.Add(PathVariable('target_name', 'The library name.', 'lod', PathVariable.PathAccept))
 
 # Local dependency paths, adapt them to your setup
-godot_headers_path = "godot_headers/"
-cpp_bindings_path = ""
+godot_headers_path = "godot-cpp/godot-headers/"
+cpp_bindings_path = "godot-cpp/"
 cpp_library = "libgodot-cpp"
 
 # only support 64 at this time..
@@ -55,7 +55,7 @@ if env['platform'] == "osx":
     if env['target'] in ('debug', 'd'):
         env.Append(CCFLAGS=['-g', '-O2'])
     else:
-        env.Append(CCFLAGS=['-g', '-O3'])
+        env.Append(CCFLAGS=['-O3'])
 
 elif env['platform'] in ('x11', 'linux'):
     env['target_path'] += 'x11/'
@@ -65,7 +65,7 @@ elif env['platform'] in ('x11', 'linux'):
     if env['target'] in ('debug', 'd'):
         env.Append(CCFLAGS=['-g3', '-Og'])
     else:
-        env.Append(CCFLAGS=['-g', '-O3'])
+        env.Append(CCFLAGS=['-O3'])
 
 elif env['platform'] == "windows":
     env['target_path'] += 'win64/'
