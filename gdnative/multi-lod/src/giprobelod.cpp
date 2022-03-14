@@ -60,8 +60,7 @@ void GIProbeLOD::_enter_tree() {
 
 void GIProbeLOD::_ready() {
     if (get_class() != "GIProbe") {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("A GIProbeLOD script is attached, but this is not a GIProbe!\n");
+        ERR_PRINT(get_name() + ": A GIProbeLOD script is attached, but this is not a GIProbe!");
         enabled = false;
         return;
     }
@@ -124,8 +123,7 @@ void GIProbeLOD::update_lod_AABB() {
     AABB objAABB = get_transformed_aabb();
 
     if (objAABB.has_no_area()) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("Invalid AABB for this GIProbe!\n");
+        ERR_PRINT(get_name() + ": Invalid AABB for this GIProbe!");
         return;
     }
 

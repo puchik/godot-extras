@@ -282,23 +282,20 @@ void LOD::update_lod_AABB() {
     
     // Check for at least LOD0
     if (!lod0) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("\nYou need to have a valid LOD0 for screen percentage based LOD.\n");
+        ERR_PRINT(get_name() + ": You need to have a valid LOD0 for screen percentage based LOD.");
     }
 
     // Try casting the LOD objects to VisualInstance (that's the only way we can get an AABB!)
     VisualInstance *lod0_visual_instance = Object::cast_to<VisualInstance>(lod0);
     if (!lod0_visual_instance) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("\nLOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)\n");
+        ERR_PRINT(get_name() + ": LOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)");
     }
 
     // Get base AABB using LOD0
     AABB object_AABB = lod0_visual_instance->get_transformed_aabb();
 
     if (object_AABB.has_no_area()) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("\nInvalid AABB for LOD0!\n");
+        ERR_PRINT(get_name() + ": Invalid AABB for LOD0!");
         return;
     }
 

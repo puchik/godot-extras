@@ -110,7 +110,7 @@ public:
     bool update_AABB_every_loop = false;
     void update_lod_AABBs(); // Need AABB for getting screen percentages
     void stop_loop(); // Stops the main thread
-    void debug_level_print(int min_debug_level, const char* message);
+    void debug_level_print(int min_debug_level, const String &message);
 
     // Distance multipliers, available to access by other LOD objects
     float global_distance_multiplier = 1.0f;
