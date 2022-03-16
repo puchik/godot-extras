@@ -94,12 +94,14 @@ void LOD::_ready() {
 
     if (has_node(lod0_path)) {
         lods[0] = Object::cast_to<Spatial>(get_node(lod0_path));
+        last_lod = 0;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD0") >= 0) {
                 lods[0] = Object::cast_to<Spatial>(child);
                 if (lods[0]) {
+                    last_lod = 0;
                     break;
                 }
             }
@@ -108,12 +110,14 @@ void LOD::_ready() {
 
     if (has_node(lod1_path)) {
         lods[1] = Object::cast_to<Spatial>(get_node(lod1_path));
+        last_lod = 1;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD1") >= 0) {
                 lods[1] = Object::cast_to<Spatial>(child);
                 if (lods[1]) {
+                    last_lod = 1;
                     break;
                 }
             }
@@ -122,12 +126,14 @@ void LOD::_ready() {
 
     if (has_node(lod2_path)) {
         lods[2] = Object::cast_to<Spatial>(get_node(lod2_path));
+        last_lod = 2;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD2") >= 0) {
                 lods[2] = Object::cast_to<Spatial>(child);
                 if (lods[2]) {
+                    last_lod = 2;
                     break;
                 }
             }
@@ -136,12 +142,14 @@ void LOD::_ready() {
 
     if (has_node(lod3_path)) {
         lods[3] = Object::cast_to<Spatial>(get_node(lod3_path));
+        last_lod = 3;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD3") >= 0) {
                 lods[3] = Object::cast_to<Spatial>(child);
                 if (lods[3]) {
+                    last_lod = 3;
                     break;
                 }
             }
@@ -186,7 +194,7 @@ void LOD::process_data(Vector3 camera_location) {
         (distance > actual_unload_distance)) {
       queue_free();
     } else if ((actual_hide_distance > 0.0f) && (distance > actual_hide_distance)) {
-      show_lod(LOD_COUNT); // >= MAX_LOD_INDEX results in all LODs hidden
+      show_lod(LOD_COUNT); // >= LOD_COUNT results in all LODs hidden
     } else if ((actual_lod3_distance > 0.0f) && (distance > actual_lod3_distance)) {
       show_lod(3);
     } else if ((actual_lod2_distance > 0.0f) && (distance > actual_lod2_distance)) {
@@ -293,17 +301,22 @@ void LOD::update_lod_multipliers_from_manager() {
 }
 
 void LOD::show_lod(int lod) {
-    // This function is safe to send lods >= LOD_COUNT, which results in every LOD hidden.
-    // What is caught and returned in this first conditional, resulting in nothing are
-    // if we're already on this LOD level,
-    // or LOD < LOD_COUNT and it doesn't exist.
-    // This means last LOD will remain visible until it hits actual_hide_distance.
-    if (lod == current_lod || (lod < LOD_COUNT && ! lods[lod])) {
+    // If lod >= LOD_COUNT, all LODS will be hidden
+   
+    // Do nothing if already on this level
+    if (lod == current_lod) {
         return;
     }
 
+    current_lod = lod;
+
+    // If lod requested doesn't exist, show last active lod until actual_hide_distance
+    if (((lod < LOD_COUNT) && !lods[lod])) {
+        lod = last_lod;
+    }
+
     // Count backwards to hit shadow caster first
-    for(int i = LOD_COUNT - 1; i >= 0 ; i--) {
+    for(int i = last_lod; i >= 0 ; i--) {
         if (lods[i]) {
             if (lods[i]->is_inside_tree()) {
                 if (i == lod) {
@@ -329,6 +342,4 @@ void LOD::show_lod(int lod) {
             }
         }
     }
-
-    current_lod = lod;
 }

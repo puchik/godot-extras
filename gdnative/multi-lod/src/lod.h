@@ -200,6 +200,8 @@ private:
     // Plus it doesn't make sense for it not to exist
     Spatial* lods[LOD_COUNT] = { };
 
+    int last_lod = 0;   // Last active LOD index
+
     // Keep track of last state to avoid unnecessary show/hide/process toggle calls
     int current_lod = -1;
 
