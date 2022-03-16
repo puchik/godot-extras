@@ -88,6 +88,19 @@ recalculate the AABB-based screen percentage LOD distances on this one specific 
 Lets you update the LOD multipliers from the manager. Called automatically by the LOD Manager when you use `update_lod_multipliers_from_settings()`. You can use this to reset the multipliers if you've set them manually without affecting
 other objects.
 
+* `max_shadow_caster: int => enum { LOD0, LOD1, LOD2, LOD3 }`
+
+Don't use any higher resolution LODs than this one, to calculate shadows. Setting LOD2 or LOD3 are recommended.
+
+This variable provides the ability to use **shadow impostors**. The renderer normally renders a mesh multiple times, once for the visual image in color, then possibly several more times for each light to generate a shadow. It is usually unnecessary to have highly accurate or detailed shadows, so you can reduce the rendered vertex count tremendously by using a lower level of detail for the shadow caster.
+
+For example, say you have a tree model with these vertex counts: LOD0=40k, LOD1=20k, LOD2=10k, LOD3=1k. When rendered, LOD0 might register 100k vertices with shadows. However if you disabled shadow casting (in the GeometryInstance section of the inspector) for LOD0 and LOD1, and set LOD2 to shadows only and visible, you might render only 50k vertices with a shadow that looks virtually identical to the one calculated from LOD0.
+
+The sample scene has two objects with different shapes for the LODs. You can see in the image below, the object on the right has a shadow rendered from each active LOD. The one on the left stops increasing the shadow resolution at LOD2, thus the shadow is from the cube even when displaying the sphere and cylinder. When the LODs are of similar shapes like a tree, the differences in shadows will be unnoticable.
+ 
+![IMAGE](doc/shadow_impostor.gif)
+
+
 # Notes
 You need the GDNative library to point to the library file (e.g. .dll) correctly, and then the have the NativeScripts correctly point to the library. Have a read of the GDNative documentation in the docs if you're having trouble.
 For Windows, this is already set up.
