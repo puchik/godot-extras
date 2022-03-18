@@ -17,7 +17,6 @@ void LOD::_register_methods() {
 
     // Inspector properties
     register_property<LOD, bool>("enabled", &LOD::enabled, true);
-    register_property<LOD, bool>("disable_processing", &LOD::disable_processing, false); // Hide the node as well as disabling its _process and _physics_process
 
     // Vars for distance-based (in metres)
     // These will be set by the ratios if use_screen_percentage is true
@@ -54,6 +53,9 @@ void LOD::_register_methods() {
     register_property<LOD, NodePath>("lod1_path", &LOD::lod1_path, NodePath());
     register_property<LOD, NodePath>("lod2_path", &LOD::lod2_path, NodePath());
     register_property<LOD, NodePath>("lod3_path", &LOD::lod3_path, NodePath());
+
+    register_signal<LOD>("lod_changed", "lod", GODOT_VARIANT_TYPE_INT);
+    register_signal<LOD>("freed");
 }
 
 LOD::LOD() {
@@ -192,6 +194,7 @@ void LOD::process_data(Vector3 camera_location) {
 
     if ((actual_unload_distance > 0.0f) &&
         (distance > actual_unload_distance)) {
+      emit_signal("freed");
       queue_free();
     } else if ((actual_hide_distance > 0.0f) && (distance > actual_hide_distance)) {
       show_lod(LOD_COUNT); // >= LOD_COUNT results in all LODs hidden
@@ -211,11 +214,6 @@ void LOD::_process(float delta) {
     if (!registered && enabled) {
         LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
     }
-}
-
-void LOD::set_node_processing(Spatial* node, bool state) {
-    node->set_physics_process(state);
-    node->set_process(state);
 }
 
 // Update the distances based on the AABB
@@ -309,6 +307,7 @@ void LOD::show_lod(int lod) {
     }
 
     current_lod = lod;
+    emit_signal("lod_changed", lod);
 
     // If lod requested doesn't exist, show last active lod until actual_hide_distance
     if (((lod < LOD_COUNT) && !lods[lod])) {
@@ -317,28 +316,22 @@ void LOD::show_lod(int lod) {
 
     // Count backwards to hit shadow caster first
     for(int i = last_lod; i >= 0 ; i--) {
-        if (lods[i]) {
-            if (lods[i]->is_inside_tree()) {
-                if (i == lod) {
-                    lods[i]->show();
+        if (lods[i] && lods[i]->is_inside_tree()) {
+            if (i == lod) {
+                lods[i]->show();
 
-                    // If shadow casting enabled
-                    if (lods[max_shadow_caster] && max_shadow_caster > 0) {
-                        // If lower LOD, turn on shadow caster, otherwise reset it
-                        if (i < max_shadow_caster) {
-                            lods[max_shadow_caster]->set("cast_shadow", GeometryInstance::SHADOW_CASTING_SETTING_SHADOWS_ONLY);
-                            lods[max_shadow_caster]->show();
-                        } else {
-                            lods[max_shadow_caster]->set("cast_shadow", GeometryInstance::SHADOW_CASTING_SETTING_ON);
-                        }
+                // If shadow casting enabled
+                if (lods[max_shadow_caster] && max_shadow_caster > 0) {
+                    // If lower LOD, turn on shadow caster, otherwise reset it
+                    if (i < max_shadow_caster) {
+                        lods[max_shadow_caster]->set("cast_shadow", GeometryInstance::SHADOW_CASTING_SETTING_SHADOWS_ONLY);
+                        lods[max_shadow_caster]->show();
+                    } else {
+                        lods[max_shadow_caster]->set("cast_shadow", GeometryInstance::SHADOW_CASTING_SETTING_ON);
                     }
-                } else if (lods[i]->is_visible()) {
-                    lods[i]->hide();
                 }
-            }
-
-            if (disable_processing) {
-                call_deferred("set_node_processing", lods[i], (i == lod));
+            } else if (lods[i]->is_visible()) {
+                lods[i]->hide();
             }
         }
     }

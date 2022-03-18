@@ -189,8 +189,6 @@ private:
     float hide_ratio = 1.0f;
     float unload_ratio = -1.0f;
 
-    bool disable_processing = false;
-
     NodePath lod0_path;
     NodePath lod1_path;
     NodePath lod2_path;
@@ -220,8 +218,6 @@ private:
     float lod3_distance_multiplier = 1.0f;
     float hide_distance_multiplier = 1.0f;
     float unload_distance_multiplier = 1.0f;
-
-    void set_node_processing(Spatial* node, bool state);
 
 public:
     static void _register_methods();
