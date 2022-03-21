@@ -67,8 +67,7 @@ void MultiMeshLOD::_enter_tree() {
 
 void MultiMeshLOD::_ready() {
     if (get_class() != "MultiMeshInstance") {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("A MultiMeshLOD script is attached, but this is not a MultiMeshLOD!\n");
+        ERR_PRINT(get_name() + ": A MultiMeshLOD script is attached, but this is not a MultiMeshLOD!");
         enabled = false;
         return;
     }
@@ -139,8 +138,7 @@ void MultiMeshLOD::update_lod_AABB() {
     AABB object_AABB = get_transformed_aabb();
 
     if (object_AABB.has_no_area()) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("Invalid AABB for this MultiMeshInstance!\n");
+        ERR_PRINT(get_name() + ": Invalid AABB for this MultiMeshInstance!");
         return;
     }
 

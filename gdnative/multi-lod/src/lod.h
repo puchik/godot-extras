@@ -28,6 +28,9 @@
 #include <Node.hpp>
 #include <VisualInstance.hpp>
 
+// Doesn't currently support more than 4 LODs due to other hardcoded variables.
+#define LOD_COUNT 4
+
 // Lights
 #include <Color.hpp>
 #include <Light.hpp>
@@ -110,7 +113,7 @@ public:
     bool update_AABB_every_loop = false;
     void update_lod_AABBs(); // Need AABB for getting screen percentages
     void stop_loop(); // Stops the main thread
-    void debug_level_print(int min_debug_level, const char* message);
+    void debug_level_print(int min_debug_level, const String &message);
 
     // Distance multipliers, available to access by other LOD objects
     float global_distance_multiplier = 1.0f;
@@ -188,18 +191,23 @@ private:
 
     bool disable_processing = false;
 
-    // Keep track of last state to avoid unnecessary show/hide/process toggle calls
-    int last_state = -1;
-
     NodePath lod0_path;
     NodePath lod1_path;
     NodePath lod2_path;
     NodePath lod3_path;
 
-    Spatial* lod0 = NULL; // LOD0 MUST exist otherwise screen percentage breaks
-    Spatial* lod1 = NULL; // Plus it doesn't make sense for it not to exist
-    Spatial* lod2 = NULL;
-    Spatial* lod3 = NULL;
+    // LOD0 MUST exist otherwise screen percentage breaks
+    // Plus it doesn't make sense for it not to exist
+    Spatial* lods[LOD_COUNT] = { };
+
+    // The highest level of LOD found
+    int last_lod = 0;
+
+    // Keep track of last state to avoid unnecessary show/hide/process toggle calls
+    int current_lod = -1;
+
+    // This LOD is the maximum used for shadow casting. If 0 (LOD0), it's effectively disabled.
+    int max_shadow_caster = 0;
 
     // Let's use the AABB centre for the centre of the object instead of
     // the parent's centre (if applicable). Instead of constantly 
@@ -231,7 +239,7 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
-    void show_lod(Spatial* lod_object, bool show); // Show or hide a LOD Spatial
+    void show_lod(int lod); // Show only this LOD, hide others
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------

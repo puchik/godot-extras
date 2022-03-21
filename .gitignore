@@ -1,1 +1,10 @@
 .import/
+
+# Ignore C++ build files
+.sconsign.dblite
+.vs/
+**/src/*.os
+**/src/*.obj
+**/bin/*/*.exp
+**/bin/*/*.lib
+**/bin/*/*.pdb

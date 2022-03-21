@@ -14,6 +14,11 @@ void LOD::_register_methods() {
     // Exposed methods
     register_method("update_lod_AABB", &LOD::update_lod_AABB);
     register_method("update_lod_multipliers_from_manager", &LOD::update_lod_multipliers_from_manager);
+
+    // Inspector properties
+    register_property<LOD, bool>("enabled", &LOD::enabled, true);
+    register_property<LOD, bool>("disable_processing", &LOD::disable_processing, false); // Hide the node as well as disabling its _process and _physics_process
+
     // Vars for distance-based (in metres)
     // These will be set by the ratios if use_screen_percentage is true
     // Distance and ratio exposed names and variable names do not match to avoid massive compatability breakage with an older version of the addon.
@@ -38,14 +43,17 @@ void LOD::_register_methods() {
     // Whether to use distance multipliers from project settings
     register_property<LOD, bool>("affected_by_distance_multipliers", &LOD::affected_by_distance_multipliers, true);
 
-    register_property<LOD, bool>("disable_processing", &LOD::disable_processing, false); // Hide the node as well as disabling its _process and _physics_process
+    register_property<LOD, int>("max_shadow_caster", &LOD::max_shadow_caster, 0,
+        GODOT_METHOD_RPC_MODE_DISABLED,
+        GODOT_PROPERTY_USAGE_DEFAULT,
+        GODOT_PROPERTY_HINT_ENUM,
+        "LOD0,LOD1,LOD2,LOD3"
+        );
 
     register_property<LOD, NodePath>("lod0_path", &LOD::lod0_path, NodePath());
     register_property<LOD, NodePath>("lod1_path", &LOD::lod1_path, NodePath());
     register_property<LOD, NodePath>("lod2_path", &LOD::lod2_path, NodePath());
     register_property<LOD, NodePath>("lod3_path", &LOD::lod3_path, NodePath());
-
-    register_property<LOD, bool>("enabled", &LOD::enabled, true);
 }
 
 LOD::LOD() {
@@ -85,13 +93,15 @@ void LOD::_ready() {
     }
 
     if (has_node(lod0_path)) {
-        lod0 = Object::cast_to<Spatial>(get_node(lod0_path));
+        lods[0] = Object::cast_to<Spatial>(get_node(lod0_path));
+        last_lod = 0;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD0") >= 0) {
-                lod0 = Object::cast_to<Spatial>(child);
-                if (lod0) {
+                lods[0] = Object::cast_to<Spatial>(child);
+                if (lods[0]) {
+                    last_lod = 0;
                     break;
                 }
             }
@@ -99,13 +109,15 @@ void LOD::_ready() {
     }
 
     if (has_node(lod1_path)) {
-        lod1 = Object::cast_to<Spatial>(get_node(lod1_path));
+        lods[1] = Object::cast_to<Spatial>(get_node(lod1_path));
+        last_lod = 1;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD1") >= 0) {
-                lod1 = Object::cast_to<Spatial>(child);
-                if (lod1) {
+                lods[1] = Object::cast_to<Spatial>(child);
+                if (lods[1]) {
+                    last_lod = 1;
                     break;
                 }
             }
@@ -113,13 +125,15 @@ void LOD::_ready() {
     }
 
     if (has_node(lod2_path)) {
-        lod2 = Object::cast_to<Spatial>(get_node(lod2_path));
+        lods[2] = Object::cast_to<Spatial>(get_node(lod2_path));
+        last_lod = 2;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD2") >= 0) {
-                lod2 = Object::cast_to<Spatial>(child);
-                if (lod2) {
+                lods[2] = Object::cast_to<Spatial>(child);
+                if (lods[2]) {
+                    last_lod = 2;
                     break;
                 }
             }
@@ -127,16 +141,25 @@ void LOD::_ready() {
     }
 
     if (has_node(lod3_path)) {
-        lod3 = Object::cast_to<Spatial>(get_node(lod3_path));
+        lods[3] = Object::cast_to<Spatial>(get_node(lod3_path));
+        last_lod = 3;
     } else {
         for (int i = 0; i < child_count; i++) {
             Node *child = Object::cast_to<Node>(child_nodes[i]);
             if (child->get_name().find("LOD3") >= 0) {
-                lod3 = Object::cast_to<Spatial>(child);
-                if (lod3) {
+                lods[3] = Object::cast_to<Spatial>(child);
+                if (lods[3]) {
+                    last_lod = 3;
                     break;
                 }
             }
+        }
+    }
+
+    // Set up initial shadow casting
+    for (int i = 0; i < max_shadow_caster; i++) {
+        if (lods[i]) {
+            lods[i]->set("cast_shadow", GeometryInstance::SHADOW_CASTING_SETTING_OFF);
         }
     }
 
@@ -167,97 +190,19 @@ void LOD::process_data(Vector3 camera_location) {
     float actual_lod2_distance = lod2_distance * lod2_distance_multiplier * global_distance_multiplier;
     float actual_lod1_distance = lod1_distance * lod1_distance_multiplier * global_distance_multiplier;
 
-    // Validity checks
-    bool lod0_valid = lod0 && lod0->is_inside_tree();
-    bool lod1_valid = lod1 && lod1->is_inside_tree();
-    bool lod2_valid = lod2 && lod2->is_inside_tree();
-    bool lod3_valid = lod3 && lod3->is_inside_tree();
-
-    // Visiblity checks. They also include the validity check.
-    bool lod0_showing = lod0_valid && lod0->is_visible();
-    bool lod1_showing = lod1_valid && lod1->is_visible();
-    bool lod2_showing = lod2_valid && lod2->is_visible();
-    bool lod3_showing = lod3_valid && lod3->is_visible();
-
-    if ((actual_unload_distance > 0.0f) && (distance > actual_unload_distance)) {
-        queue_free();
+    if ((actual_unload_distance > 0.0f) &&
+        (distance > actual_unload_distance)) {
+      queue_free();
     } else if ((actual_hide_distance > 0.0f) && (distance > actual_hide_distance)) {
-        if (last_state == 4) {
-            return;
-        }
-        last_state = 4;
-        if (lod0_showing) {
-            show_lod(lod0, false);
-        }
-        if (lod1_showing) {
-            show_lod(lod1, false);
-        }
-        if (lod2_showing) {
-            show_lod(lod2, false);
-        }
-        if (lod3_showing) {
-            show_lod(lod3, false);
-        }
-    } else if (lod3_valid && (actual_lod3_distance > 0.0f) && (distance > actual_lod3_distance)) {
-        if (last_state == 3) {
-            return;
-        }
-        last_state = 3;
-        show_lod(lod3, true);
-        if (lod0_showing) {
-            show_lod(lod0, false);
-        }
-        if (lod1_showing) {
-            show_lod(lod1, false);
-        }
-        if (lod2_showing) {
-            show_lod(lod2, false);
-        }
-    } else if (lod2_valid && (actual_lod2_distance > 0.0f) && (distance > actual_lod2_distance)) {
-        if (last_state == 2) {
-            return;
-        }
-        last_state = 2;
-        show_lod(lod2, true);
-        if (lod0_showing) {
-            show_lod(lod0, false);
-        }
-        if (lod1_showing) {
-            show_lod(lod1, false);
-        }
-        if (lod3_showing) {
-            show_lod(lod3, false);
-        }
-    } else if (lod1_valid && (actual_lod1_distance > 0.0f) && (distance > actual_lod1_distance)) {
-        if (last_state == 1) {
-            return;
-        }
-        last_state = 1;
-        show_lod(lod1, true);
-        if (lod0_showing) {
-            show_lod(lod0, false);
-        }
-        if (lod2_showing) {
-            show_lod(lod2, false);
-        }
-        if (lod3_showing) {
-            show_lod(lod3, false);
-        }
-    } else if (lod0_valid) {
-        if (last_state == 0) {
-            return;
-        }
-        last_state = 0;
-        show_lod(lod0, true);
-        if (lod1_showing) {
-            show_lod(lod1, false);
-        }
-        if (lod2_showing) {
-            show_lod(lod2, false);
-        }
-        if (lod3_showing) {
-            show_lod(lod3, false);
-        }
+      show_lod(LOD_COUNT); // >= LOD_COUNT results in all LODs hidden
+    } else if ((actual_lod3_distance > 0.0f) && (distance > actual_lod3_distance)) {
+      show_lod(3);
+    } else if ((actual_lod2_distance > 0.0f) && (distance > actual_lod2_distance)) {
+      show_lod(2);
+    } else if ((actual_lod1_distance > 0.0f) && (distance > actual_lod1_distance)) {
+      show_lod(1);
+    } else {
+      show_lod(0);
     }
 }
 
@@ -281,42 +226,39 @@ void LOD::update_lod_AABB() {
     // So make an AABB for the objects manually.
     
     // Check for at least LOD0
-    if (!lod0) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("\nYou need to have a valid LOD0 for screen percentage based LOD.\n");
+    if (!lods[0]) {
+        ERR_PRINT(get_name() + ": You need to have a valid LOD0 for screen percentage based LOD.");
     }
 
     // Try casting the LOD objects to VisualInstance (that's the only way we can get an AABB!)
-    VisualInstance *lod0_visual_instance = Object::cast_to<VisualInstance>(lod0);
+    VisualInstance *lod0_visual_instance = Object::cast_to<VisualInstance>(lods[0]);
     if (!lod0_visual_instance) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("\nLOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)\n");
+        ERR_PRINT(get_name() + ": LOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)");
     }
 
     // Get base AABB using LOD0
     AABB object_AABB = lod0_visual_instance->get_transformed_aabb();
 
     if (object_AABB.has_no_area()) {
-        printf("%s: ", get_name().alloc_c_string());
-        printf("\nInvalid AABB for LOD0!\n");
+        ERR_PRINT(get_name() + ": Invalid AABB for LOD0!");
         return;
     }
 
     // Merge others if available
-    if (lod1) {
-        VisualInstance *lod1_visual_instance = Object::cast_to<VisualInstance>(lod1);
+    if (lods[1]) {
+        VisualInstance *lod1_visual_instance = Object::cast_to<VisualInstance>(lods[1]);
         if (lod1_visual_instance) {
             object_AABB = object_AABB.merge(lod1_visual_instance->get_transformed_aabb());
         }   
     }
-    if (lod2) {
-        VisualInstance *lod2_visual_instance = Object::cast_to<VisualInstance>(lod2);
+    if (lods[2]) {
+        VisualInstance *lod2_visual_instance = Object::cast_to<VisualInstance>(lods[2]);
         if (lod2_visual_instance) {
             object_AABB = object_AABB.merge(lod2_visual_instance->get_transformed_aabb());
         }
     }
-    if (lod3) {
-        VisualInstance *lod3_visual_instance = Object::cast_to<VisualInstance>(lod3);
+    if (lods[3]) {
+        VisualInstance *lod3_visual_instance = Object::cast_to<VisualInstance>(lods[3]);
         if (lod3_visual_instance) {
             object_AABB = object_AABB.merge(lod3_visual_instance->get_transformed_aabb());
         }
@@ -358,9 +300,46 @@ void LOD::update_lod_multipliers_from_manager() {
     }
 }
 
-void LOD::show_lod(Spatial* lod_object, bool show) {
-    show ? lod_object->show() : lod_object->hide();
-    if (disable_processing) {
-        call_deferred("set_node_processing", lod_object, show);
+void LOD::show_lod(int lod) {
+    // If lod >= LOD_COUNT, all LODS will be hidden
+   
+    // Do nothing if already on this level
+    if (lod == current_lod) {
+        return;
+    }
+
+    current_lod = lod;
+
+    // If lod requested doesn't exist, show last active lod until actual_hide_distance
+    if (((lod < LOD_COUNT) && !lods[lod])) {
+        lod = last_lod;
+    }
+
+    // Count backwards to hit shadow caster first
+    for(int i = last_lod; i >= 0 ; i--) {
+        if (lods[i]) {
+            if (lods[i]->is_inside_tree()) {
+                if (i == lod) {
+                    lods[i]->show();
+
+                    // If shadow casting enabled
+                    if (lods[max_shadow_caster] && max_shadow_caster > 0) {
+                        // If lower LOD, turn on shadow caster, otherwise reset it
+                        if (i < max_shadow_caster) {
+                            lods[max_shadow_caster]->set("cast_shadow", GeometryInstance::SHADOW_CASTING_SETTING_SHADOWS_ONLY);
+                            lods[max_shadow_caster]->show();
+                        } else {
+                            lods[max_shadow_caster]->set("cast_shadow", GeometryInstance::SHADOW_CASTING_SETTING_ON);
+                        }
+                    }
+                } else if (lods[i]->is_visible()) {
+                    lods[i]->hide();
+                }
+            }
+
+            if (disable_processing) {
+                call_deferred("set_node_processing", lods[i], (i == lod));
+            }
+        }
     }
 }
