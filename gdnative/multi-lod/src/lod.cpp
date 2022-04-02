@@ -14,6 +14,7 @@ void LOD::_register_methods() {
     // Exposed methods
     register_method("update_lod_AABB", &LOD::update_lod_AABB);
     register_method("update_lod_multipliers_from_manager", &LOD::update_lod_multipliers_from_manager);
+    register_method("get_current_lod", &LOD::get_current_lod);
 
     // Inspector properties
     register_property<LOD, bool>("enabled", &LOD::enabled, true);

@@ -236,6 +236,7 @@ public:
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
     void show_lod(int lod); // Show only this LOD, hide others
+    inline int get_current_lod() { return current_lod; }
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
