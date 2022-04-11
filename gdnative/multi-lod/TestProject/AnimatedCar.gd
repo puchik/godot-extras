@@ -35,7 +35,7 @@ func enable() -> void:
 func disable() -> void:
 	set_process(false)
 	$AnimationPlayer.stop(false)
-	
+
 
 func _on_lod_changed(lod: int) -> void:
 	print("AnimatedCar changing lod level: ", lod)

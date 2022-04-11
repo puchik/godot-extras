@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=2]
+[gd_scene load_steps=41 format=2]
 
 [ext_resource path="res://camera.gd" type="Script" id=1]
 [ext_resource path="res://Items/LightPole.tscn" type="PackedScene" id=2]
@@ -16,6 +16,11 @@ size = Vector3( 60, 0.2, 60 )
 
 [sub_resource type="CubeMesh" id=2]
 size = Vector3( 1, 2, 60 )
+
+[sub_resource type="CylinderMesh" id=1]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.5
 
 [sub_resource type="SpatialMaterial" id=7]
 albedo_color = Color( 0.960784, 0.898039, 0.862745, 1 )
@@ -58,7 +63,7 @@ emission_on_uv2 = false
 [sub_resource type="CubeMesh" id=6]
 size = Vector3( 2, 5, 2 )
 
-[sub_resource type="SpatialMaterial" id=1]
+[sub_resource type="SpatialMaterial" id=30]
 albedo_color = Color( 0.133333, 1, 0, 1 )
 
 [sub_resource type="CylinderMesh" id=11]
@@ -243,7 +248,7 @@ directional_shadow_max_distance = 200.0
 [node name="Camera" type="Camera" parent="Scene"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.24738, 0 )
 fov = 80.0
-far = 250.0
+far = 8192.0
 script = ExtResource( 1 )
 
 [node name="Floor" type="MeshInstance" parent="Scene"]
@@ -277,58 +282,133 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 18.9173, 0, -8.70988 )
 [node name="LightPole5" parent="Demo1_Simple1/LightPoles" instance=ExtResource( 2 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 11.9564, 0, -15.5451 )
 
+[node name="DisabledLightPole6" type="Spatial" parent="Demo1_Simple1/LightPoles"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 18.3523, 0, -22.4213 )
+
+[node name="Pole" type="MeshInstance" parent="Demo1_Simple1/LightPoles/DisabledLightPole6"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.742983, 0 )
+mesh = SubResource( 1 )
+material/0 = null
+
+[node name="OmniLight" type="OmniLight" parent="Demo1_Simple1/LightPoles/DisabledLightPole6"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65753, 0 )
+light_color = Color( 0.886275, 0.796078, 0.682353, 1 )
+light_energy = 1.5
+light_indirect_energy = 1.5
+shadow_enabled = true
+script = ExtResource( 9 )
+enabled = false
+shadowRatio = 15.0
+hideRatio = 10.0
+
 [node name="Cubes" type="Spatial" parent="Demo1_Simple1"]
 
 [node name="Cube" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 9.9074, 0, -18.1856 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube2" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 9.9074, 0, -14.6006 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube3" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16.0545, 0, -10.3315 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube4" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16.0545, 0, -7.0903 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube5" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 10.261, 0, -4.15552 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube6" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 10.261, 0, 0.216232 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube7" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 15.272, 0, 0.216232 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube8" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 17.134, 0, 4.78613 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube9" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 15.2224, 0, 8.53414 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube10" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 10.1588, 0, 11.409 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube11" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6146, 0, 12.8194 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
-[node name="Cube12" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
+[node name="DisabledCube12" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16.6091, 0, -19.8106 )
+enabled = false
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
+
+[node name="DisabledCube13" parent="Demo1_Simple1/Cubes" instance=ExtResource( 5 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16.6091, 0, -23.5787 )
+enabled = false
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Demo2_Simple2" type="Spatial" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.63914, 0, -7.35193 )
 
 [node name="Cube13" parent="Demo2_Simple2" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -27.3012, 0, -18.086 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube14" parent="Demo2_Simple2" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -28.4503, 0, -14.0148 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube15" parent="Demo2_Simple2" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -28.4503, 0, -9.157 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Cube16" parent="Demo2_Simple2" instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -17.7623, 0, -16.1756 )
+lod1ratio = 25.0
+lod2ratio = 10.0
+lod3ratio = 5.5
 
 [node name="Car" parent="Demo2_Simple2" instance=ExtResource( 3 )]
 transform = Transform( -0.255294, 0, 0.966863, 0, 1, 0, -0.966863, 0, -0.255294, -21.3877, 0.350232, -17.8635 )
@@ -353,6 +433,7 @@ material/0 = null
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2.52799, -0.172188, -2.23615 )
 multimesh = SubResource( 10 )
 script = ExtResource( 6 )
+use_screen_percentage = false
 
 [node name="GrassBlade" type="MeshInstance" parent="Demo3_MMI/GrassSurface"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.194593, 0 )
@@ -373,6 +454,7 @@ subdiv = 0
 extents = Vector3( 6, 5, 6 )
 data = SubResource( 16 )
 script = ExtResource( 4 )
+hideRatio = 10.0
 
 [node name="OtherPlatform" type="MeshInstance" parent="Demo4_GIProbe"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 44.5921 )
@@ -399,11 +481,15 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4969, 0, -21.5706 )
 
 [node name="UsingImpostor" type="ImmediateGeometry" parent="Demo5_ShadowImpostors"]
 script = ExtResource( 8 )
+use_screen_percentage = false
+lod1dist = 10.0
+lod2dist = 20.0
+hideDist = 60.0
 max_shadow_caster = 2
 
 [node name="LOD0" type="MeshInstance" parent="Demo5_ShadowImpostors/UsingImpostor"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
-material_override = SubResource( 1 )
+material_override = SubResource( 30 )
 mesh = SubResource( 11 )
 material/0 = null
 
@@ -431,10 +517,14 @@ material/0 = null
 [node name="Without" type="ImmediateGeometry" parent="Demo5_ShadowImpostors"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -3.38475, 0, 0 )
 script = ExtResource( 8 )
+use_screen_percentage = false
+lod1dist = 10.0
+lod2dist = 20.0
+hideDist = 60.0
 
 [node name="LOD0" type="MeshInstance" parent="Demo5_ShadowImpostors/Without"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
-material_override = SubResource( 1 )
+material_override = SubResource( 30 )
 mesh = SubResource( 11 )
 material/0 = null
 
@@ -467,12 +557,12 @@ script = ExtResource( 10 )
 
 [node name="Model" type="ImmediateGeometry" parent="Demo6_Signals/AnimatedCar"]
 script = ExtResource( 8 )
-lod1dist = 15.0
-lod2dist = 25.0
-lod3dist = 50.0
-hideDist = 75.0
-unloadDist = 100.0
 use_screen_percentage = false
+lod1dist = 20.0
+lod2dist = 40.0
+lod3dist = 60.0
+hideDist = 80.0
+unloadDist = 150.0
 
 [node name="LOD0" type="MeshInstance" parent="Demo6_Signals/AnimatedCar/Model"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.517928, 0 )
@@ -588,8 +678,6 @@ shadow_enabled = true
 shadow_reverse_cull_face = true
 spot_range = 10.0
 script = ExtResource( 9 )
-hideDist = 75.0
-use_screen_percentage = false
 
 [node name="RightLight" type="SpotLight" parent="Demo6_Signals/AnimatedCar"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.592008, 0.584198, -1.48224 )
@@ -597,8 +685,6 @@ shadow_enabled = true
 shadow_reverse_cull_face = true
 spot_range = 10.0
 script = ExtResource( 9 )
-hideDist = 75.0
-use_screen_percentage = false
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Demo6_Signals/AnimatedCar"]
 autoplay = "BlinkingLights"
