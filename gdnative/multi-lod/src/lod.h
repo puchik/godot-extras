@@ -1,10 +1,6 @@
 #ifndef MULTI_LOD_H
 #define MULTI_LOD_H
 
-#ifndef CLAMP
-#define CLAMP(m_a, m_min, m_max) (((m_a) < (m_min)) ? (m_min) : (((m_a) > (m_max)) ? m_max : m_a))
-#endif
-
 #include <Godot.hpp>
 #include <ProjectSettings.hpp>
 #include <SceneTree.hpp>
@@ -29,9 +25,6 @@
 #include <Node.hpp>
 #include <VisualInstance.hpp>
 
-// Doesn't currently support more than 4 LODs due to other hardcoded variables.
-#define LOD_COUNT 4
-
 // Lights
 #include <Color.hpp>
 #include <Light.hpp>
@@ -42,6 +35,15 @@
 // MultiMesh
 #include <MultiMeshInstance.hpp>
 #include <MultiMesh.hpp>
+
+// Doesn't currently support more than 4 LODs for meshes due to other hardcoded variables.
+#define LOD_COUNT 4
+
+#define PI 3.14159f
+
+#ifndef CLAMP
+#define CLAMP(m_a, m_min, m_max) (((m_a) < (m_min)) ? (m_min) : (((m_a) > (m_max)) ? m_max : m_a))
+#endif
 
 namespace godot {
 
@@ -59,6 +61,7 @@ private:
 
     Camera* camera = nullptr;
     float fov = 70.0f; // Need FOV for getting screen percentages
+    float tan_theta = 0.7002f; // Calc for 70.0f
 
     ProjectSettings* project_settings;
 
@@ -67,9 +70,7 @@ private:
 
     // Flag to let LOD objects know to update their multipliers (if necessary)
     bool update_multipliers_flag = false;
-    // Flag to let LOD objects know to update their FOVs (AABB calculation for screen size based LOD)
-    bool update_fovs_flag = false;
-    // Flag to let LOD objects know to update their AABB (use after settinf FOV if necessary)
+    // Flag to let LOD objects know to update their AABB (use after setting FOV if necessary)
     bool update_AABBs_flag = false;
 
     // Debug to console detail level. 0 = off, 1 = print the steps in each thread loop, 2 = print the object names as we go through them.
@@ -111,11 +112,15 @@ public:
     void update_lod_multipliers_in_objects(); // Tell LOD objects it's time to update
     bool set_up_camera();
     bool set_camera(Camera* p_camera);
-    bool update_fov_every_loop = false;
-    void update_fov(); // Need FOV for getting screen percentages
     bool update_AABB_every_loop = false;
     void update_lod_AABBs(); // Need AABB for getting screen percentages
     void stop_loop(); // Stops the main thread
+    bool update_fov_every_loop = false;
+    void update_fov(); // Need FOV for getting screen percentages
+    void set_fov(float p_fov);
+    inline float get_fov() { return fov; }
+    inline float get_tan_theta() { return tan_theta; }
+
     void debug_level_print(int min_debug_level, const String &message);
 
     // Distance multipliers, available to access by other LOD objects
@@ -285,8 +290,6 @@ private:
     real_t light_target_energy;
     Color shadow_target_color;
 
-    float fov; // Need FOV for getting screen percentages
-
     void fade_light(float delta);
     void fade_shadow(float delta);
 
@@ -333,8 +336,6 @@ private:
 
     real_t probe_base_energy;
 
-    float fov; // Need FOV for getting screen percentages
-
     float global_distance_multiplier = 1.0f;
 
 public:
@@ -379,8 +380,6 @@ private:
 
     float fade_speed = 1.0f;
     float fade_exponent = 1.0f;  // Exponent of the [0, 1] curve that reduces count. At 1, we fade linearly.
-
-    float fov; // Need FOV for getting screen percentages
 
     float global_distance_multiplier = 1.0f;
 

@@ -35,7 +35,6 @@ void LOD::_register_methods() {
     register_property<LOD, float>("lod3ratio", &LOD::lod3_ratio, 5.5f);
     register_property<LOD, float>("hideRatio", &LOD::hide_ratio, 1.0f);
     register_property<LOD, float>("unloadRatio", &LOD::unload_ratio, -1.0f);
-    register_property<LOD, float>("fov", &LOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("registered", &LOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("ready_finished", &LOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("interacted_with_manager", &LOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
@@ -265,32 +264,31 @@ void LOD::update_lod_AABB() {
         }
     }
 
-    // Get the longest axis (conservative estimate of the object size vs screen)
-    float longest_axis = object_AABB.get_longest_axis_size();
 
-    // Use an isosceles triangle to get a worst-case estimate of the distances
-    // Don't forget the degrees to radians conversion
-    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
+        // Get the longest axis (conservative estimate of the object size vs screen)
+        float longest_axis = object_AABB.get_longest_axis_size();
 
-    // Get the distances at which we have the LOD ratios of the screen
-    lod1_distance = ((longest_axis / (lod1_ratio / 100.0f)) / (2.0f * tan_theta));
-    lod2_distance = ((longest_axis / (lod2_ratio / 100.0f)) / (2.0f * tan_theta));
-    lod3_distance = ((longest_axis / (lod3_ratio / 100.0f)) / (2.0f * tan_theta));
-    hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
+        // Use an isosceles triangle to get a worst-case estimate of the distances
+        // Don't forget the degrees to radians conversion
+        float tan_theta = lc.get_tan_theta();
 
     // Get the offset of the parent position and the overall AABB
     transform_offset_AABB = get_global_transform().origin - (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f));
+        // Get the distances at which we have the LOD ratios of the screen
+        lod1_distance = ((longest_axis / (lod1_ratio / 100.0f)) / (2.0f * tan_theta));
+        lod2_distance = ((longest_axis / (lod2_ratio / 100.0f)) / (2.0f * tan_theta));
+        lod3_distance = ((longest_axis / (lod3_ratio / 100.0f)) / (2.0f * tan_theta));
+        hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
 }
 
 void LOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
-        Node* LOD_manager_node = get_node("/root/LodManager");
-        global_distance_multiplier = LOD_manager_node->get("global_distance_multiplier");
-        lod1_distance_multiplier = LOD_manager_node->get("lod1_distance_multiplier");
-        lod2_distance_multiplier = LOD_manager_node->get("lod2_distance_multiplier");
-        lod3_distance_multiplier = LOD_manager_node->get("lod3_distance_multiplier");
-        hide_distance_multiplier = LOD_manager_node->get("hide_distance_multiplier");
-        unload_distance_multiplier = LOD_manager_node->get("unload_distance_multiplier");
+    if (lc.affected_by_distance_multipliers && lc.lod_manager) { 
+        global_distance_multiplier = lc.lod_manager->global_distance_multiplier;
+        lod1_distance_multiplier = lc.lod_manager->lod1_distance_multiplier;
+        lod2_distance_multiplier = lc.lod_manager->lod2_distance_multiplier;
+        lod3_distance_multiplier = lc.lod_manager->lod3_distance_multiplier;
+        hide_distance_multiplier = lc.lod_manager->hide_distance_multiplier;
+        unload_distance_multiplier = lc.lod_manager->unload_distance_multiplier;
     } else {
         global_distance_multiplier = 1.0f;
         lod1_distance_multiplier = 1.0f;

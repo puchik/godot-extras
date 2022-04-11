@@ -24,7 +24,6 @@ void LightLOD::_register_methods() {
     register_property<LightLOD, bool>("use_screen_percentage", &LightLOD::use_screen_percentage, true);
     register_property<LightLOD, float>("shadowRatio", &LightLOD::shadow_ratio, 6.0f);
     register_property<LightLOD, float>("hideRatio", &LightLOD::hide_ratio, 2.0f);
-    register_property<LightLOD, float>("fov", &LightLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LightLOD, bool>("registered", &LightLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LightLOD, bool>("ready_finished", &LightLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LightLOD, bool>("interacted_with_manager", &LightLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
@@ -169,22 +168,21 @@ void LightLOD::update_lod_AABB() {
         return;
     }
 
-    // Get the longest axis (conservative estimate of the object size vs screen)
-    float longest_axis = object_AABB.get_longest_axis_size();
+        // Get the longest axis (conservative estimate of the object size vs screen)
+        float longest_axis = object_AABB.get_longest_axis_size();
 
-    // Use an isosceles triangle to get a worst-case estimate of the distances
-    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
+        // Use an isosceles triangle to get a worst-case estimate of the distances
+        float tan_theta = lc.get_tan_theta();
 
-    // Get the distances at which we have the LOD ratios of the screen
-    shadow_distance = ((longest_axis / (shadow_ratio / 100.0f)) / (2.0f * tan_theta));
-    hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
+        // Get the distances at which we have the LOD ratios of the screen
+        shadow_distance = ((longest_axis / (shadow_ratio / 100.0f)) / (2.0f * tan_theta));
+        hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
 }
 
 void LightLOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
-        Node* lod_manager_node = get_node("/root/LodManager");
-        global_distance_multiplier = lod_manager_node->get("global_distance_multiplier");
-        shadow_distance_multiplier = lod_manager_node->get("shadow_distance_multiplier");
+    if (lc.affected_by_distance_multipliers && lc.lod_manager) {
+        global_distance_multiplier = lc.lod_manager->global_distance_multiplier;
+        shadow_distance_multiplier = lc.lod_manager->shadow_distance_multiplier;
     } else {
         global_distance_multiplier = 1.0f;
         shadow_distance_multiplier = 1.0f;

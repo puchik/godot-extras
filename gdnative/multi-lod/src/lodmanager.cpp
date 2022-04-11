@@ -23,8 +23,8 @@ void LODManager::_register_methods() {
 
     // Thread function
     register_method("main_loop", &LODManager::main_loop);
+    register_property<LODManager, float>("fov", &LODManager::set_fov, &LODManager::get_fov, 70.f);
 
-    register_property<LODManager, float>("fov", &LODManager::fov, 70.0f);
     register_property<LODManager, bool>("update_fov_every_loop", &LODManager::update_fov_every_loop, false);
     register_property<LODManager, bool>("update_AABB_every_loop", &LODManager::update_AABB_every_loop, false);
     register_property<LODManager, float>("tick_speed", &LODManager::tick_speed, 0.2f);
@@ -219,9 +219,6 @@ void LODManager::lod_function() {
         if (update_multipliers_flag) {
             update_multipliers_flag = false;
         }
-        if (update_fovs_flag) {
-            update_fovs_flag = false;
-        }
         if (update_AABBs_flag) {
             update_AABBs_flag = false;
         }
@@ -358,27 +355,21 @@ void LODManager::update_lod_multipliers_in_objects() {
     }
 }
 
-void LODManager::update_fov() {
-    debug_level_print(1, "Updating the LOD manager camera FOV.");
+void LODManager::set_fov(float p_fov) {
+    debug_level_print(1, "LODManager: Updating the camera FOV, and setting flag to update AABBs.");
+    fov = p_fov;
+    tan_theta = tan((p_fov * PI / 180.0f) / 2.0f);
 
+    update_lod_AABBs();
+}
+
+// Just syntatic sugar
+void LODManager::update_fov() {
     if (!camera) {
-        // No camera to get FOV from
+        ERR_PRINT("LODManager: No camera to get FOV from.");
         return;
     }
-    fov = camera->get_fov();
-
-    debug_level_print(1, "Setting the flag to update FOV in LOD objects to true.");
-    // Enable the flag to update FOV in the thread loop
-    // Make sure we're not partway through the loop
-    if (use_multithreading) {
-        lod_objects_semaphore->wait();
-    }
-    update_fovs_flag = true;
-    // If we're updating the FOV, the AABB screen percentage will need to be updated, too.
-    update_AABBs_flag = true;
-    if (use_multithreading) {
-        lod_objects_semaphore->post();
-    }
+    set_fov(camera->get_fov());
 }
 
 void LODManager::update_lod_AABBs() {

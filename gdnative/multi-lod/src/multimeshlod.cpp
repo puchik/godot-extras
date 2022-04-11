@@ -24,7 +24,6 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, bool>("use_screen_percentage", &MultiMeshLOD::use_screen_percentage, true);
     register_property<MultiMeshLOD, float>("minRatio", &MultiMeshLOD::min_ratio, 2.0f);
     register_property<MultiMeshLOD, float>("maxRatio", &MultiMeshLOD::max_ratio, 5.0f);
-    register_property<MultiMeshLOD, float>("fov", &MultiMeshLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("registered", &MultiMeshLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("ready_finished", &MultiMeshLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("interacted_with_manager", &MultiMeshLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
@@ -147,20 +146,19 @@ void MultiMeshLOD::update_lod_AABB() {
     }
 
     // Get the longest axis (conservative estimate of the object size vs screen)
-    float longest_axis = object_AABB.get_longest_axis_size();
 
-    // Use an isosceles triangle to get a worst-case estimate of the distances
-    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
+        // Get the longest axis (conservative estimate of the object size vs screen)
+        float longest_axis = object_AABB.get_longest_axis_size();
 
-    // Get the distances at which we have the LOD ratios of the screen
-    min_distance = ((longest_axis / (max_ratio / 100.0f)) / (2.0f * tan_theta));
-    max_distance = ((longest_axis / (min_ratio / 100.0f)) / (2.0f * tan_theta));
+        // Get the distances at which we have the LOD ratios of the screen
+        float tan_theta = lc.get_tan_theta();
+        min_distance = ((longest_axis / (max_ratio / 100.0f)) / (2.0f * tan_theta));
+        max_distance = ((longest_axis / (min_ratio / 100.0f)) / (2.0f * tan_theta));
 }
 
 void MultiMeshLOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
-        Node* lod_manager_node = get_node("/root/LodManager");
-        global_distance_multiplier = lod_manager_node->get("global_distance_multiplier");
+    if (lc.affected_by_distance_multipliers && lc.lod_manager) {
+        global_distance_multiplier = lc.lod_manager->global_distance_multiplier;
     } else {
         global_distance_multiplier = 1.0f;
     }

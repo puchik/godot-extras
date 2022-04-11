@@ -22,7 +22,6 @@ void GIProbeLOD::_register_methods() {
     // Screen percentage ratios (and if applicable)
     register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::use_screen_percentage, true);
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
-    register_property<GIProbeLOD, float>("fov", &GIProbeLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("registered", &GIProbeLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("ready_finished", &GIProbeLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("interacted_with_manager", &GIProbeLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
@@ -130,20 +129,17 @@ void GIProbeLOD::update_lod_AABB() {
         return;
     }
 
-    // Get the longest axis (conservative estimate of the object size vs screen)
-    float longest_axis = objAABB.get_longest_axis_size();
 
-    // Use an isosceles triangle to get a worst-case estimate of the distances
-    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
+        // Get the longest axis (conservative estimate of the object size vs screen)
+        float longest_axis = objAABB.get_longest_axis_size();
 
-    // Get the distances at which we have the LOD ratios of the screen
-    hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
+        // Get the distances at which we have the LOD ratios of the screen
+        hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * lc.get_tan_theta()));
 }
 
 void GIProbeLOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
-        Node* lod_manager_node = get_node("/root/LodManager");
-        global_distance_multiplier = lod_manager_node->get("global_distance_multiplier");
+    if (lc.affected_by_distance_multipliers && lc.lod_manager) {
+        global_distance_multiplier = lc.lod_manager->global_distance_multiplier;
     } else {
         global_distance_multiplier = 1.0f;
     }
