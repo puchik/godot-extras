@@ -84,9 +84,11 @@ void LOD::_enter_tree() {
 }
 
 void LOD::_ready() {
+    lc.setup(Object::cast_to<Spatial>(this));
+    lc.lod_manager->debug_level_print(1, get_name() + String(": Initializing Mesh LOD."));
+
     /// Get the VisualInstance objects for LOD nodes
     // If there's no path, search for any children with "LOD + n" in its name
-
     // So we don't have to fetch list of children once for every object
     Array child_nodes;
     int64_t child_count;
@@ -166,8 +168,8 @@ void LOD::_ready() {
         }
     }
 
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
-    ready_finished = true;
+    lc.try_register();
+    lc.ready_finished = true;
 }
 
 void LOD::process_data(Vector3 camera_location) {

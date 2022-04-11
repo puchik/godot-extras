@@ -22,6 +22,7 @@
 #include <Spatial.hpp>
 #include <Vector3.hpp>
 #include <ctime>
+#include <vector>
 
 // Objects
 #include <NodePath.hpp>
@@ -44,6 +45,8 @@
 
 namespace godot {
 
+class LODBaseComponent;
+
 //// Manager of all LOD objects ----------------------------------------------------------------------------------
 class LODManager : public Node {
     GODOT_CLASS(LODManager, Node)
@@ -52,7 +55,7 @@ private:
     float tick_speed = 0.2f;
 
     // Array of arrays of LOD objects
-    Array lod_object_arrays;
+    std::vector<std::vector<LODBaseComponent*>> lod_object_arrays;
 
     Camera* camera = nullptr;
     float fov = 70.0f; // Need FOV for getting screen percentages
@@ -98,8 +101,8 @@ public:
     void _process(float delta);
     void _exit_tree();
 
-    void add_object(Node* obj);
-    void remove_object(Node* obj);
+    void add_object(LODBaseComponent* lbc);
+    void remove_object(LODBaseComponent* lbc);
     
     // Reading project settings is pretty expensive... set up to only update manually by default
     // but we have the option to update every loop, too
@@ -133,45 +136,63 @@ public:
     int objects_per_frame = 10000;
 };
 
-//// Some base LOD variables. --------------------------------------------------------------------------
-// Shared common functions are separate.
-// It would be better to have a base class for all of them but that seems to cause a 
-// multiple inheritance calamity that Godot doesn't like.
-class LODBaseVariables {
-    GODOT_CLASS(LODBaseVariables, Object)
+class LODBaseComponent : public Reference {
+    GODOT_CLASS(LODBaseComponent, Reference)
+protected:
+    Spatial* lod_object; // Object that owns us
+
 public:
+    LODManager* lod_manager;
     bool enabled = true; // Switch to false if we want to turn off LOD functionality
     bool registered = false; // Whether the manager knows we exist
-    // Dirty bit. Indicates if the LOD manager has had any contact with this object (other than registration)
-    bool interacted_with_manager = false;
-    // Set to true after _ready runs. We need to reliably know if all setup including children has been completed
-    // in case we're leaving and exiting the tree without being freed/deleted.
     bool ready_finished = false;
 
     // Distance by screen percentage
     // Use a conservative/worst-case method for getting the size of the object
     // relative to the screen (largest AABB axis on both viewport axes)
     bool use_screen_percentage = true;
-    float fov; // Need FOV for getting screen percentages
     bool affected_by_distance_multipliers = true;
 
-    LODBaseVariables();
-    ~LODBaseVariables();
+    void _init() {}
+    LODBaseComponent() {}
+    ~LODBaseComponent() {}
+
+    void setup(Spatial* p_object);
+    inline Spatial* get_object() { return lod_object; }
+
+    inline float get_fov();
+    float get_tan_theta();
+
+    virtual void process_data(Vector3 p_camera_location) {}
+    virtual void update_lod_AABB() {}
+    virtual void update_lod_multipliers_from_manager() {}
+
+    void try_register();   // register is a C++ keyword, so try_
+    void unregister();
 };
 
-//// Shared LOD functions ------------------------------------------------------------------------------
-// Would have liked to have more shared functions, but... see comment above LODBaseVariables...
-class LODCommonFunctions {
+template <class T>
+class LODComponent : public LODBaseComponent {
+    GODOT_CLASS(LODComponent, LODBaseComponent)
 public:
-    static bool try_register(Node* node, bool state); // Register or unregister the object. Returns success or fail
-    static float lod_calculate_AABB_distance_tan_theta(float fov);
+    void process_data(Vector3 p_camera_location) override {
+        Object::cast_to<T>(lod_object)->process_data(p_camera_location);
+    }
+    void update_lod_AABB() override {
+        Object::cast_to<T>(lod_object)->update_lod_AABB();
+    }
+    void update_lod_multipliers_from_manager()override {
+        Object::cast_to<T>(lod_object)->update_lod_multipliers_from_manager();
+    }
 };
 
 //// Object based LOD ----------------------------------------------------------------------------------
-class LOD : public VisualInstance, public LODBaseVariables {
+class LOD : public VisualInstance {
     GODOT_CLASS(LOD, VisualInstance)
 
 private:
+    LODComponent<LOD> lc;
+
     // Distance by metres
     // These will be set by the ratios below if use_screen_percentage is true
     float lod1_distance = 7.0f; // put any of these to -1 if you don't have a lod or don't want to unload etc
@@ -240,10 +261,12 @@ public:
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
-class LightLOD : public Light, public LODBaseVariables {
+class LightLOD : public Light {
     GODOT_CLASS(LightLOD, Light)
 
 private:
+    LODComponent<LightLOD> lc;
+
     float shadow_distance = 20.0f;
     float hide_distance = 80.0f; // -1 to never hide
     float fade_range = 5.0f; // For ex, the intensity of the shadow will adjust from 0 to 1 between [shadow_distance - fade_range, shadow_distance]
@@ -289,10 +312,12 @@ public:
 };
 
 //// GIProbe LOD -------------------------------------------------------------------
-class GIProbeLOD : public GIProbe, public LODBaseVariables  {
+class GIProbeLOD : public GIProbe {
     GODOT_CLASS(GIProbeLOD, GIProbe)
 
 private:
+    LODComponent<GIProbeLOD> lc;
+
     float hide_distance = 80.0f;
     float fade_range = 5.0f; // The energy of the probe will adjust from 0 to 1 between [unload_distance - fade_range, unload_distance]
 
@@ -331,10 +356,12 @@ public:
 };
 
 //// MultiMeshInstance LOD -------------------------------------------------------------------
-class MultiMeshLOD : public MultiMeshInstance, public LODBaseVariables  {
+class MultiMeshLOD : public MultiMeshInstance {
     GODOT_CLASS(MultiMeshLOD, MultiMeshInstance)
 
 private:
+    LODComponent<MultiMeshLOD> lc;
+
     float min_distance = 5.0f; // At this distance, or below, we see max number of multimesh count
     float max_distance = 80.0f; // At this distance, or above, we see min (or none) number of multimesh count
 

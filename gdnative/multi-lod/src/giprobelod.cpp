@@ -59,9 +59,12 @@ void GIProbeLOD::_enter_tree() {
 }
 
 void GIProbeLOD::_ready() {
+    lc.setup(Object::cast_to<Spatial>(this));
+    lc.lod_manager->debug_level_print(1, get_name() + String(": Initializing GIProbeLOD."));
+
     if (get_class() != "GIProbe") {
         ERR_PRINT(get_name() + ": A GIProbeLOD script is attached, but this is not a GIProbe!");
-        enabled = false;
+        lc.enabled = false;
         return;
     }
 
@@ -69,8 +72,8 @@ void GIProbeLOD::_ready() {
     probe_base_energy = get_energy();
     probe_target_energy = probe_base_energy;
 
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
-    ready_finished = true;
+    lc.try_register();
+    lc.ready_finished = true;
 }
 
 void GIProbeLOD::process_data(Vector3 camera_location) {

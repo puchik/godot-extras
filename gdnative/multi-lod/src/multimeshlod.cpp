@@ -66,9 +66,13 @@ void MultiMeshLOD::_enter_tree() {
 }
 
 void MultiMeshLOD::_ready() {
+    lc.setup(Object::cast_to<Spatial>(this));
+    lc.lod_manager->debug_level_print(1, get_name() + String(": Initializing MultiMeshLOD."));
+
     if (get_class() != "MultiMeshInstance") {
         ERR_PRINT(get_name() + ": A MultiMeshLOD script is attached, but this is not a MultiMeshLOD!");
-        enabled = false;
+        lc.enabled = false;
+        set_process(false);
         return;
     }
 
@@ -78,8 +82,8 @@ void MultiMeshLOD::_ready() {
     }
     target_count = max_count;
 
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
-    ready_finished = true;
+    lc.try_register();
+    lc.ready_finished = true;
 }
 
 void MultiMeshLOD::process_data(Vector3 camera_location) {

@@ -62,9 +62,13 @@ void LightLOD::_enter_tree() {
 }
 
 void LightLOD::_ready() {
+    lc.setup(Object::cast_to<Spatial>(this));
+    lc.lod_manager->debug_level_print(1, get_name() + String(": Initializing LightLOD."));
+
     if ((get_class() != "OmniLight") && (get_class() != "SpotLight")) {
         ERR_PRINT(get_name() + ": A LightLOD script is attached, but this is not a Light!");
-        enabled = false;
+        lc.enabled = false;
+        set_process(false);
         return;
     }
 
@@ -73,8 +77,8 @@ void LightLOD::_ready() {
     light_target_energy = light_base_energy;
     shadow_target_color = get_shadow_color();
 
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
-    ready_finished = true;
+    lc.try_register();
+    lc.ready_finished = true;
 }
 
 void LightLOD::process_data(Vector3 camera_location) {
