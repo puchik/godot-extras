@@ -408,23 +408,20 @@ bool LODManager::set_up_camera() {
     return false;
 }
 
-bool LODManager::set_camera(Node* given_node) {
-    debug_level_print(1, "Setting the camera used by the LOD Manager.");
-    Camera* camera_node;
-    camera_node = Object::cast_to<Camera>(given_node);
-    if (camera_node) {
-        camera = camera_node;
+bool LODManager::set_camera(Camera* p_camera) {
+    debug_level_print(1, "LODManager: Setting the camera.");
+    if (p_camera) {
+        camera = p_camera;
         update_fov();
         return true;
     } else {
-        ERR_PRINT("Camera provided in setCamera of LODManager is not valid.");
+        ERR_PRINT("LODManager: Camera provided in set_camera() is not valid.");
         return false;
     }
 }
 
 void LODManager::debug_level_print(int min_debug_level, const String &message) {
-    if (debug_level >= min_debug_level)
-    {
+    if (debug_level >= min_debug_level) {
         Godot::print(message);
     }
 }

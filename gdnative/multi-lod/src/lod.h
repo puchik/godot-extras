@@ -54,8 +54,8 @@ private:
     // Array of arrays of LOD objects
     Array lod_object_arrays;
 
-    Camera* camera = NULL;
-    float fov; // Need FOV for getting screen percentages
+    Camera* camera = nullptr;
+    float fov = 70.0f; // Need FOV for getting screen percentages
 
     ProjectSettings* project_settings;
 
@@ -107,7 +107,7 @@ public:
     void update_lod_multipliers_from_settings();
     void update_lod_multipliers_in_objects(); // Tell LOD objects it's time to update
     bool set_up_camera();
-    bool set_camera(Node* given_node);
+    bool set_camera(Camera* p_camera);
     bool update_fov_every_loop = false;
     void update_fov(); // Need FOV for getting screen percentages
     bool update_AABB_every_loop = false;
