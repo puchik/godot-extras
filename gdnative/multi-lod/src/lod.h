@@ -263,6 +263,9 @@ public:
     void update_lod_AABB(); // Update AABB only if necessary
     void show_lod(int lod); // Show only this LOD, hide others
     inline int get_current_lod() { return current_lod; }
+
+    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
@@ -279,7 +282,6 @@ private:
     // Distance by screen percentage
     // Use a conservative/worst-case method for getting the size of the object
     // relative to the screen (largest AABB axis on both viewport axes)
-    bool use_screen_percentage = true;
     float shadow_ratio = 6.0f;
     float hide_ratio = 2.0f;
 
@@ -312,6 +314,9 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... we have the option to
     void update_lod_AABB(); // Update AABB only if necessary
+
+    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
 };
 
 //// GIProbe LOD -------------------------------------------------------------------
@@ -327,7 +332,6 @@ private:
     // Distance by screen percentage
     // Use a conservative/worst-case method for getting the size of the object
     // relative to the screen (largest AABB axis on both viewport axes)
-    bool use_screen_percentage = true;
     float hide_ratio = 2.0f;
 
     float fade_speed = 1.0f;
@@ -354,6 +358,9 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
+
+    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
 };
 
 //// MultiMeshInstance LOD -------------------------------------------------------------------
@@ -369,7 +376,6 @@ private:
     // Distance by screen percentage
     // Use a conservative/worst-case method for getting the size of the object
     // relative to the screen (largest AABB axis on both viewport axes)
-    bool use_screen_percentage = true;
     float min_ratio = 2.0f;
     float max_ratio = 5.0f;
 
@@ -401,6 +407,9 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
+
+    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
 };
 
 }

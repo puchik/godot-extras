@@ -9,9 +9,14 @@ void LightLOD::_register_methods() {
     register_method("_exit_tree", &LightLOD::_exit_tree);
     register_method("process_data", &LightLOD::process_data);
 
+    // Whether to use distance multipliers from project settings
+    register_property<LightLOD, bool>("affectedByDistanceMultipliers", &LightLOD::set_affected_by_distance, &LightLOD::get_affected_by_distance, true);
+
     // Exposed methods
     register_method("update_lod_AABB", &LightLOD::update_lod_AABB);
     register_method("update_lod_multipliers_from_manager", &LightLOD::update_lod_multipliers_from_manager);
+    // Screen percentage ratios (and if applicable)
+    register_property<LightLOD, bool>("use_screen_percentage", &LightLOD::set_use_screen_percentage, &LightLOD::get_use_screen_percentage, true);
 
     // Vars for distance-based (in metres)
     // These will be set by the ratios if useScreenPercentage is true
@@ -21,15 +26,11 @@ void LightLOD::_register_methods() {
     register_property<LightLOD, float>("fade_range", &LightLOD::fade_range, 5.0f); 
 
     // Screen percentage ratios (and if applicable)
-    register_property<LightLOD, bool>("use_screen_percentage", &LightLOD::use_screen_percentage, true);
     register_property<LightLOD, float>("shadowRatio", &LightLOD::shadow_ratio, 6.0f);
     register_property<LightLOD, float>("hideRatio", &LightLOD::hide_ratio, 2.0f);
     register_property<LightLOD, bool>("registered", &LightLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LightLOD, bool>("ready_finished", &LightLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LightLOD, bool>("interacted_with_manager", &LightLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-
-    // Whether to use distance multipliers from project settings
-    register_property<LightLOD, bool>("affected_by_distance_multipliers", &LightLOD::affected_by_distance_multipliers, true);
 
     register_property<LightLOD, float>("fade_speed", &LightLOD::fade_speed, 2.0f);
 
@@ -161,12 +162,13 @@ void LightLOD::fade_shadow(float delta) {
 
 // Update the distances based on the AABB
 void LightLOD::update_lod_AABB() {
-    AABB object_AABB = get_transformed_aabb();
+    if (lc.use_screen_percentage) {
+        AABB object_AABB = get_transformed_aabb();
 
-    if (object_AABB.has_no_area()) {
-        ERR_PRINT(get_name() + ": Invalid AABB for this light!");
-        return;
-    }
+        if (object_AABB.has_no_area()) {
+            ERR_PRINT(get_name() + ": Invalid AABB for this light!");
+            return;
+        }
 
         // Get the longest axis (conservative estimate of the object size vs screen)
         float longest_axis = object_AABB.get_longest_axis_size();
@@ -177,6 +179,7 @@ void LightLOD::update_lod_AABB() {
         // Get the distances at which we have the LOD ratios of the screen
         shadow_distance = ((longest_axis / (shadow_ratio / 100.0f)) / (2.0f * tan_theta));
         hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
+    }
 }
 
 void LightLOD::update_lod_multipliers_from_manager() {

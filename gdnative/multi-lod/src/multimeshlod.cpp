@@ -13,6 +13,11 @@ void MultiMeshLOD::_register_methods() {
     // Exposed methods
     register_method("update_lod_AABB", &MultiMeshLOD::update_lod_AABB);
     register_method("update_lod_multipliers_from_manager", &MultiMeshLOD::update_lod_multipliers_from_manager);
+    // Whether to use distance multipliers from project settings
+    register_property<MultiMeshLOD, bool>("affectedByDistanceMultipliers", &MultiMeshLOD::set_affected_by_distance, &MultiMeshLOD::get_affected_by_distance, true);
+
+    // Screen percentage ratios (and if applicable)
+    register_property<MultiMeshLOD, bool>("use_screen_percentage", &MultiMeshLOD::set_use_screen_percentage, &MultiMeshLOD::get_use_screen_percentage, true);
 
     // Vars for distance-based (in metres)
     // These will be set by the ratios if useScreenPercentage is true
@@ -20,16 +25,11 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, float>("minDist", &MultiMeshLOD::min_distance, 5.0f); 
     register_property<MultiMeshLOD, float>("maxDist", &MultiMeshLOD::max_distance, 80.0f); 
 
-    // Screen percentage ratios (and if applicable)
-    register_property<MultiMeshLOD, bool>("use_screen_percentage", &MultiMeshLOD::use_screen_percentage, true);
     register_property<MultiMeshLOD, float>("minRatio", &MultiMeshLOD::min_ratio, 2.0f);
     register_property<MultiMeshLOD, float>("maxRatio", &MultiMeshLOD::max_ratio, 5.0f);
     register_property<MultiMeshLOD, bool>("registered", &MultiMeshLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("ready_finished", &MultiMeshLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<MultiMeshLOD, bool>("interacted_with_manager", &MultiMeshLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-
-    // Whether to use distance multipliers from project settings
-    register_property<MultiMeshLOD, bool>("affectedByDistanceMultipliers", &MultiMeshLOD::affected_by_distance_multipliers, true);
 
     register_property<MultiMeshLOD, int64_t>("minCount", &MultiMeshLOD::min_count, 0); 
     register_property<MultiMeshLOD, int64_t>("maxCount", &MultiMeshLOD::max_count, -1); 
@@ -138,14 +138,13 @@ void MultiMeshLOD::_process(float delta) {
 
 // Update the distances based on the AABB
 void MultiMeshLOD::update_lod_AABB() {
-    AABB object_AABB = get_transformed_aabb();
+    if (lc.use_screen_percentage) {
+        AABB object_AABB = get_transformed_aabb();
 
-    if (object_AABB.has_no_area()) {
-        ERR_PRINT(get_name() + ": Invalid AABB for this MultiMeshInstance!");
-        return;
-    }
-
-    // Get the longest axis (conservative estimate of the object size vs screen)
+        if (object_AABB.has_no_area()) {
+            ERR_PRINT(get_name() + ": Invalid AABB for this MultiMeshInstance!");
+            return;
+        }
 
         // Get the longest axis (conservative estimate of the object size vs screen)
         float longest_axis = object_AABB.get_longest_axis_size();
@@ -154,6 +153,7 @@ void MultiMeshLOD::update_lod_AABB() {
         float tan_theta = lc.get_tan_theta();
         min_distance = ((longest_axis / (max_ratio / 100.0f)) / (2.0f * tan_theta));
         max_distance = ((longest_axis / (min_ratio / 100.0f)) / (2.0f * tan_theta));
+    }
 }
 
 void MultiMeshLOD::update_lod_multipliers_from_manager() {

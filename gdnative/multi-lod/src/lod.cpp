@@ -19,6 +19,12 @@ void LOD::_register_methods() {
     // Inspector properties
     register_property<LOD, bool>("enabled", &LOD::enabled, true);
 
+    // Whether to use distance multipliers from project settings
+    register_property<LOD, bool>("affectedByDistanceMultipliers", &LOD::set_affected_by_distance, &LOD::get_affected_by_distance, true);
+
+    // Screen percentage ratios (and if applicable)
+    register_property<LOD, bool>("use_screen_percentage", &LOD::set_use_screen_percentage, &LOD::get_use_screen_percentage, true);
+
     // Vars for distance-based (in metres)
     // These will be set by the ratios if use_screen_percentage is true
     // Distance and ratio exposed names and variable names do not match to avoid massive compatability breakage with an older version of the addon.
@@ -29,7 +35,6 @@ void LOD::_register_methods() {
     register_property<LOD, float>("unloadDist", &LOD::unload_distance, -1.0f);
 
     // Screen percentage ratios (and if applicable)
-    register_property<LOD, bool>("use_screen_percentage", &LOD::use_screen_percentage, true);
     register_property<LOD, float>("lod1ratio", &LOD::lod1_ratio, 25.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
     register_property<LOD, float>("lod2ratio", &LOD::lod2_ratio, 10.0f);
     register_property<LOD, float>("lod3ratio", &LOD::lod3_ratio, 5.5f);
@@ -38,9 +43,6 @@ void LOD::_register_methods() {
     register_property<LOD, bool>("registered", &LOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("ready_finished", &LOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<LOD, bool>("interacted_with_manager", &LOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    
-    // Whether to use distance multipliers from project settings
-    register_property<LOD, bool>("affected_by_distance_multipliers", &LOD::affected_by_distance_multipliers, true);
 
     register_property<LOD, int>("max_shadow_caster", &LOD::max_shadow_caster, 0,
         GODOT_METHOD_RPC_MODE_DISABLED,
@@ -182,7 +184,7 @@ void LOD::process_data(Vector3 camera_location) {
         return;
     }
  
-    if (use_screen_percentage) {
+    if (lc.use_screen_percentage) {
         object_location -= transform_offset_AABB;
     }
     float distance = camera_location.distance_to(object_location);
@@ -227,13 +229,13 @@ void LOD::update_lod_AABB() {
     
     // Check for at least LOD0
     if (!lods[0]) {
-        ERR_PRINT(get_name() + ": You need to have a valid LOD0 for screen percentage based LOD.");
+        ERR_PRINT(get_name() + ": Does not have a valid LOD0, required for screen percentage.");
     }
 
     // Try casting the LOD objects to VisualInstance (that's the only way we can get an AABB!)
     VisualInstance *lod0_visual_instance = Object::cast_to<VisualInstance>(lods[0]);
     if (!lod0_visual_instance) {
-        ERR_PRINT(get_name() + ": LOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type)");
+        ERR_PRINT(get_name() + ": LOD0 could not be cast to VisualInstance for the AABB calculation (check the Node type).");
     }
 
     // Get base AABB using LOD0
@@ -264,7 +266,10 @@ void LOD::update_lod_AABB() {
         }
     }
 
+    // Get the offset of the parent position and the overall AABB
+    transform_offset_AABB = get_global_transform().origin - (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f));
 
+    if (lc.use_screen_percentage) {
         // Get the longest axis (conservative estimate of the object size vs screen)
         float longest_axis = object_AABB.get_longest_axis_size();
 
@@ -272,13 +277,12 @@ void LOD::update_lod_AABB() {
         // Don't forget the degrees to radians conversion
         float tan_theta = lc.get_tan_theta();
 
-    // Get the offset of the parent position and the overall AABB
-    transform_offset_AABB = get_global_transform().origin - (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f));
         // Get the distances at which we have the LOD ratios of the screen
         lod1_distance = ((longest_axis / (lod1_ratio / 100.0f)) / (2.0f * tan_theta));
         lod2_distance = ((longest_axis / (lod2_ratio / 100.0f)) / (2.0f * tan_theta));
         lod3_distance = ((longest_axis / (lod3_ratio / 100.0f)) / (2.0f * tan_theta));
         hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
+    }
 }
 
 void LOD::update_lod_multipliers_from_manager() {

@@ -9,9 +9,14 @@ void GIProbeLOD::_register_methods() {
     register_method("_exit_tree", &GIProbeLOD::_exit_tree);
     register_method("process_data", &GIProbeLOD::process_data);
 
+    // Whether to use distance multipliers from project settings
+    register_property<GIProbeLOD, bool>("affectedByDistanceMultipliers", &GIProbeLOD::set_affected_by_distance, &GIProbeLOD::get_affected_by_distance, true);
+
     // Exposed methods
     register_method("update_lod_AABB", &GIProbeLOD::update_lod_AABB);
     register_method("update_lod_multipliers_from_manager", &GIProbeLOD::update_lod_multipliers_from_manager);
+    // Screen percentage ratios (and if applicable)
+    register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::set_use_screen_percentage, &GIProbeLOD::get_use_screen_percentage, true);
 
     // Vars for distance-based (in metres)
     // This will be set by the ratio if useScreenPercentage is true
@@ -19,15 +24,10 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, float>("hideDist", &GIProbeLOD::hide_distance, 80.0f); 
     register_property<GIProbeLOD, float>("fade_range", &GIProbeLOD::fade_range, 5.0f);
 
-    // Screen percentage ratios (and if applicable)
-    register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::use_screen_percentage, true);
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
     register_property<GIProbeLOD, bool>("registered", &GIProbeLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("ready_finished", &GIProbeLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
     register_property<GIProbeLOD, bool>("interacted_with_manager", &GIProbeLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-
-    // Whether to use distance multipliers from project settings
-    register_property<GIProbeLOD, bool>("affected_by_distance_multipliers", &GIProbeLOD::affected_by_distance_multipliers, true);
 
     register_property<GIProbeLOD, float>("fade_speed", &GIProbeLOD::fade_speed, 1.0f);
 
@@ -122,19 +122,20 @@ void GIProbeLOD::_process(float delta) {
 
 // Update the distances based on the AABB
 void GIProbeLOD::update_lod_AABB() {
-    AABB objAABB = get_transformed_aabb();
+    if (lc.use_screen_percentage) {
+        AABB objAABB = get_transformed_aabb();
 
-    if (objAABB.has_no_area()) {
-        ERR_PRINT(get_name() + ": Invalid AABB for this GIProbe!");
-        return;
-    }
-
+        if (objAABB.has_no_area()) {
+            ERR_PRINT(get_name() + ": Invalid AABB for this GIProbe!");
+            return;
+        }
 
         // Get the longest axis (conservative estimate of the object size vs screen)
         float longest_axis = objAABB.get_longest_axis_size();
 
         // Get the distances at which we have the LOD ratios of the screen
         hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * lc.get_tan_theta()));
+    }
 }
 
 void GIProbeLOD::update_lod_multipliers_from_manager() {
