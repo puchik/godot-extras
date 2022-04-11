@@ -125,6 +125,7 @@ void LODManager::lod_function() {
             camera_location = camera->get_global_transform().origin;        
         } else {
             ERR_PRINT("LODManager: Camera is invalid or not attached to the scene tree.");
+            stop_loop();
             return;
         }
 
@@ -184,7 +185,7 @@ void LODManager::lod_function() {
                     continue;
                 }
 
-                debug_level_print(2, obj->get_name() + ": LOD object is valid.");
+                debug_level_print(2, String("LODManager: ") + obj->get_name() + ": LOD object is valid.");
 
                 // Update multiplier if needed. It will fetch the distances from our public values
                 if (update_multipliers_flag) {
@@ -245,6 +246,7 @@ void LODManager::main_loop() {
 
 void LODManager::stop_loop() {
     debug_level_print(1, "LODManager: Stopping the LOD Manager loop/main thread.");
+    set_process(false);
     if (manager_removed) {
         return;
     } else {
