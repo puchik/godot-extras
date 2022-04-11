@@ -114,12 +114,13 @@ public:
     bool set_camera(Camera* p_camera);
     bool update_AABB_every_loop = false;
     void update_lod_AABBs(); // Need AABB for getting screen percentages
-    void stop_loop(); // Stops the main thread
     bool update_fov_every_loop = false;
     void update_fov(); // Need FOV for getting screen percentages
     void set_fov(float p_fov);
     inline float get_fov() { return fov; }
     inline float get_tan_theta() { return tan_theta; }
+
+    void stop_loop(); // Stops the main thread
 
     void debug_level_print(int min_debug_level, const String &message);
 

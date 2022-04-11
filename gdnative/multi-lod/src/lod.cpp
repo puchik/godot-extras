@@ -5,17 +5,6 @@
 using namespace godot;
 
 void LOD::_register_methods() {
-    // Godot and thread functions
-    register_method("_process", &LOD::_process);
-    register_method("_ready", &LOD::_ready);
-    register_method("_enter_tree", &LOD::_enter_tree);
-    register_method("_exit_tree", &LOD::_exit_tree);
-    register_method("process_data", &LOD::process_data);
-    // Exposed methods
-    register_method("update_lod_AABB", &LOD::update_lod_AABB);
-    register_method("update_lod_multipliers_from_manager", &LOD::update_lod_multipliers_from_manager);
-    register_method("get_current_lod", &LOD::get_current_lod);
-
     // Inspector properties
     register_property<LOD, bool>("enabled", &LOD::set_enabled, &LOD::get_enabled, true);
 
@@ -53,6 +42,17 @@ void LOD::_register_methods() {
     register_property<LOD, NodePath>("lod2_path", &LOD::lod2_path, NodePath());
     register_property<LOD, NodePath>("lod3_path", &LOD::lod3_path, NodePath());
 
+    // Exposed methods
+    register_method("_process", &LOD::_process);
+    register_method("_ready", &LOD::_ready);
+    register_method("_enter_tree", &LOD::_enter_tree);
+    register_method("_exit_tree", &LOD::_exit_tree);
+
+    register_method("update_lod_AABB", &LOD::update_lod_AABB);
+    register_method("update_lod_multipliers_from_manager", &LOD::update_lod_multipliers_from_manager);
+    register_method("get_current_lod", &LOD::get_current_lod);
+
+    //Signals
     register_signal<LOD>("lod_changed", "lod", GODOT_VARIANT_TYPE_INT);
     register_signal<LOD>("freed");
 }
@@ -77,6 +77,14 @@ void LOD::_enter_tree() {
     if (!lc.registered && lc.ready_finished) {
         lc.unregister();
         set_process(true);
+    }
+}
+
+void LOD::_process(float delta) {
+    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
     }
 }
 
@@ -208,14 +216,6 @@ void LOD::process_data(Vector3 camera_location) {
       show_lod(1);
     } else {
       show_lod(0);
-    }
-}
-
-void LOD::_process(float delta) {
-    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!lc.registered) {
-        lc.try_register();
-        set_process(false);
     }
 }
 

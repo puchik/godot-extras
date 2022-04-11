@@ -4,17 +4,9 @@
 using namespace godot;
 
 void MultiMeshLOD::_register_methods() {
-    register_method("_process", &MultiMeshLOD::_process);
-    register_method("_ready", &MultiMeshLOD::_ready);
-    register_method("_enter_tree", &MultiMeshLOD::_enter_tree);
-    register_method("_exit_tree", &MultiMeshLOD::_exit_tree);
-    register_method("process_data", &MultiMeshLOD::process_data);
     // Inspector properties
     register_property<MultiMeshLOD, bool>("enabled", &MultiMeshLOD::set_enabled, &MultiMeshLOD::get_enabled, true);
 
-    // Exposed methods
-    register_method("update_lod_AABB", &MultiMeshLOD::update_lod_AABB);
-    register_method("update_lod_multipliers_from_manager", &MultiMeshLOD::update_lod_multipliers_from_manager);
     // Whether to use distance multipliers from project settings
     register_property<MultiMeshLOD, bool>("affectedByDistanceMultipliers", &MultiMeshLOD::set_affected_by_distance, &MultiMeshLOD::get_affected_by_distance, true);
 
@@ -36,6 +28,14 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, float>("fade_speed", &MultiMeshLOD::fade_speed, 1.0f);
     register_property<MultiMeshLOD, float>("fade_exponent", &MultiMeshLOD::fade_exponent, 1.0f);
 
+    // Exposed methods
+    register_method("_process", &MultiMeshLOD::_process);
+    register_method("_ready", &MultiMeshLOD::_ready);
+    register_method("_enter_tree", &MultiMeshLOD::_enter_tree);
+    register_method("_exit_tree", &MultiMeshLOD::_exit_tree);
+
+    register_method("update_lod_AABB", &MultiMeshLOD::update_lod_AABB);
+    register_method("update_lod_multipliers_from_manager", &MultiMeshLOD::update_lod_multipliers_from_manager);
 }
 
 MultiMeshLOD::MultiMeshLOD() {
@@ -59,6 +59,36 @@ void MultiMeshLOD::_enter_tree() {
     if (!lc.registered && lc.ready_finished) {
         lc.unregister();
         set_process(true);
+    }
+}
+
+void MultiMeshLOD::_process(float delta) {
+    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
+    }
+
+    // Lerp visible instance count if needed
+    int64_t instance_count = multimesh->get_visible_instance_count();
+    if (instance_count != target_count) {
+        /// Lerp
+        // We normally floor the value, but in case of high FPS, our lerp might get stuck.
+        // Let's get the equation result first. Then, if the difference is positive and above 0.001,
+        // make sure we raise the count by at least 1.
+        float next_value = CLAMP((instance_count + ((target_count - instance_count) * fade_speed * delta)), 0.1f, max_count);
+        int next_instance_count = int64_t(floor(next_value));
+        if (next_value - (float)instance_count > 0.001f && instance_count == next_instance_count) {
+            next_instance_count++;
+        }
+        instance_count = next_instance_count;
+        multimesh->set_visible_instance_count(instance_count);
+
+        if ((instance_count == 0) && is_visible()) {
+            hide();
+        } else if ((instance_count > 0) && !is_visible()) {
+            show();
+        }
     }
 }
 
@@ -105,36 +135,6 @@ void MultiMeshLOD::process_data(Vector3 camera_location) {
     float actual_min_distance = min_distance * global_distance_multiplier;
     target_count = int64_t(floor(pow(CLAMP((actual_max_distance - distance) / (actual_max_distance  - actual_min_distance), 0.0, 1.0), fade_exponent) * (max_count - min_count)));
     target_count += min_count;
-}
-
-void MultiMeshLOD::_process(float delta) {
-    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!lc.registered) {
-        lc.try_register();
-        set_process(false);
-    }
-
-    // Lerp visible instance count if needed
-    int64_t instance_count = multimesh->get_visible_instance_count();
-    if (instance_count != target_count) {
-        /// Lerp
-        // We normally floor the value, but in case of high FPS, our lerp might get stuck.
-        // Let's get the equation result first. Then, if the difference is positive and above 0.001,
-        // make sure we raise the count by at least 1.
-        float next_value = CLAMP((instance_count + ((target_count - instance_count) * fade_speed * delta)), 0.1f, max_count);
-        int next_instance_count = int64_t(floor(next_value));
-        if (next_value - (float)instance_count > 0.001f && instance_count == next_instance_count) {
-            next_instance_count++;
-        }
-        instance_count = next_instance_count;
-        multimesh->set_visible_instance_count(instance_count);
-
-        if ((instance_count == 0) && is_visible()) {
-            hide();
-        } else if ((instance_count > 0) && !is_visible()) {
-            show();
-        }
-    }
 }
 
 // Update the distances based on the AABB

@@ -3,20 +3,12 @@
 using namespace godot;
 
 void GIProbeLOD::_register_methods() {
-    register_method("_process", &GIProbeLOD::_process);
-    register_method("_ready", &GIProbeLOD::_ready);
-    register_method("_enter_tree", &GIProbeLOD::_enter_tree);
-    register_method("_exit_tree", &GIProbeLOD::_exit_tree);
-    register_method("process_data", &GIProbeLOD::process_data);
     // Inspector properties
     register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::set_enabled, &GIProbeLOD::get_enabled, true);
 
     // Whether to use distance multipliers from project settings
     register_property<GIProbeLOD, bool>("affectedByDistanceMultipliers", &GIProbeLOD::set_affected_by_distance, &GIProbeLOD::get_affected_by_distance, true);
 
-    // Exposed methods
-    register_method("update_lod_AABB", &GIProbeLOD::update_lod_AABB);
-    register_method("update_lod_multipliers_from_manager", &GIProbeLOD::update_lod_multipliers_from_manager);
     // Screen percentage ratios (and if applicable)
     register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::set_use_screen_percentage, &GIProbeLOD::get_use_screen_percentage, true);
 
@@ -29,6 +21,14 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
     register_property<GIProbeLOD, float>("fade_speed", &GIProbeLOD::fade_speed, 1.0f);
 
+    // Exposed methods
+    register_method("_process", &GIProbeLOD::_process);
+    register_method("_ready", &GIProbeLOD::_ready);
+    register_method("_enter_tree", &GIProbeLOD::_enter_tree);
+    register_method("_exit_tree", &GIProbeLOD::_exit_tree);
+
+    register_method("update_lod_AABB", &GIProbeLOD::update_lod_AABB);
+    register_method("update_lod_multipliers_from_manager", &GIProbeLOD::update_lod_multipliers_from_manager);
 }
 
 GIProbeLOD::GIProbeLOD() {
@@ -51,6 +51,30 @@ void GIProbeLOD::_enter_tree() {
     if (!lc.registered && lc.ready_finished) {
         lc.unregister();
         set_process(true);
+    }
+}
+
+void GIProbeLOD::_process(float delta) {
+    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
+    }
+
+    // Fade GIProbe if needed
+    real_t probe_energy = get_energy();
+    if (lc.registered && (probe_energy != probe_target_energy)) {
+        /// Lerp
+        // If the probe energy wasn't 1, then the fade might be slower or faster
+        // We don't want the speed to be dependent on energy, so multiply speed by base
+        probe_energy = probe_energy + ((probe_target_energy - probe_energy) * (fade_speed * probe_base_energy * delta));
+        set_energy(probe_energy);
+
+        if ((probe_energy < 0.05) && is_visible()) {
+            hide();
+        } else if ((probe_energy >= 0.05) && !is_visible()) {
+            show();
+        }
     }
 }
 
@@ -94,30 +118,6 @@ void GIProbeLOD::process_data(Vector3 camera_location) {
                                 0.0f, 
                                 1.0f);
 
-}
-
-void GIProbeLOD::_process(float delta) {
-    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!lc.registered) {
-        lc.try_register();
-        set_process(false);
-    }
-
-    // Fade GIProbe if needed
-    real_t probe_energy = get_energy();
-    if (lc.registered && (probe_energy != probe_target_energy)) {
-        /// Lerp
-        // If the probe energy wasn't 1, then the fade might be slower or faster
-        // We don't want the speed to be dependent on energy, so multiply speed by base
-        probe_energy = probe_energy + ((probe_target_energy - probe_energy) * (fade_speed * probe_base_energy * delta));
-        set_energy(probe_energy);
-
-        if ((probe_energy < 0.05) && is_visible()) {
-            hide();
-        } else if ((probe_energy >= 0.05) && !is_visible()) {
-            show();
-        }
-    }
 }
 
 // Update the distances based on the AABB

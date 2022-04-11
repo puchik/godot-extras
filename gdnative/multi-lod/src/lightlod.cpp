@@ -3,20 +3,12 @@
 using namespace godot;
 
 void LightLOD::_register_methods() {
-    register_method("_process", &LightLOD::_process);
-    register_method("_ready", &LightLOD::_ready);
-    register_method("_enter_tree", &LightLOD::_enter_tree);
-    register_method("_exit_tree", &LightLOD::_exit_tree);
-    register_method("process_data", &LightLOD::process_data);
     // Inspector properties
     register_property<LightLOD, bool>("enabled", &LightLOD::set_enabled, &LightLOD::get_enabled, true);
 
     // Whether to use distance multipliers from project settings
     register_property<LightLOD, bool>("affectedByDistanceMultipliers", &LightLOD::set_affected_by_distance, &LightLOD::get_affected_by_distance, true);
 
-    // Exposed methods
-    register_method("update_lod_AABB", &LightLOD::update_lod_AABB);
-    register_method("update_lod_multipliers_from_manager", &LightLOD::update_lod_multipliers_from_manager);
     // Screen percentage ratios (and if applicable)
     register_property<LightLOD, bool>("use_screen_percentage", &LightLOD::set_use_screen_percentage, &LightLOD::get_use_screen_percentage, true);
 
@@ -26,12 +18,19 @@ void LightLOD::_register_methods() {
     register_property<LightLOD, float>("shadowDist", &LightLOD::shadow_distance, 50.0f);
     register_property<LightLOD, float>("hideDist", &LightLOD::hide_distance, 150.0f); // -1 to never unload
     register_property<LightLOD, float>("fade_range", &LightLOD::fade_range, 5.0f); 
+    register_property<LightLOD, float>("fade_speed", &LightLOD::fade_speed, 2.0f);
 
     // Screen percentage ratios (and if applicable)
     register_property<LightLOD, float>("shadowRatio", &LightLOD::shadow_ratio, 6.0f);
     register_property<LightLOD, float>("hideRatio", &LightLOD::hide_ratio, 2.0f);
 
-    register_property<LightLOD, float>("fade_speed", &LightLOD::fade_speed, 2.0f);
+    // Exposed methods
+    register_method("_process", &LightLOD::_process);
+    register_method("_ready", &LightLOD::_ready);
+    register_method("_enter_tree", &LightLOD::_enter_tree);
+    register_method("_exit_tree", &LightLOD::_exit_tree);
+    register_method("update_lod_AABB", &LightLOD::update_lod_AABB);
+    register_method("update_lod_multipliers_from_manager", &LightLOD::update_lod_multipliers_from_manager);
 }
 
 LightLOD::LightLOD() {
@@ -55,6 +54,21 @@ void LightLOD::_enter_tree() {
     if (!lc.registered && lc.ready_finished) {
         lc.unregister();
         set_process(true);
+    }
+}
+
+void LightLOD::_process(float delta) {
+    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
+    }
+
+    if (lc.registered) {
+        // Fade light
+        fade_light(delta);
+        // Fade shadows
+        fade_shadow(delta);
     }
 }
 
@@ -111,21 +125,6 @@ void LightLOD::process_data(Vector3 camera_location) {
                                     light_base_energy);
     }
 
-}
-
-void LightLOD::_process(float delta) {
-    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!lc.registered) {
-        lc.try_register();
-        set_process(false);
-    }
-
-    if (lc.registered) {
-        // Fade light
-        fade_light(delta);
-        // Fade shadows
-        fade_shadow(delta);
-    }
 }
 
 void LightLOD::fade_light(float delta) {
