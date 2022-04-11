@@ -8,6 +8,8 @@ void GIProbeLOD::_register_methods() {
     register_method("_enter_tree", &GIProbeLOD::_enter_tree);
     register_method("_exit_tree", &GIProbeLOD::_exit_tree);
     register_method("process_data", &GIProbeLOD::process_data);
+    // Inspector properties
+    register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::set_enabled, &GIProbeLOD::get_enabled, true);
 
     // Whether to use distance multipliers from project settings
     register_property<GIProbeLOD, bool>("affectedByDistanceMultipliers", &GIProbeLOD::set_affected_by_distance, &GIProbeLOD::get_affected_by_distance, true);
@@ -25,13 +27,8 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, float>("fade_range", &GIProbeLOD::fade_range, 5.0f);
 
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
-    register_property<GIProbeLOD, bool>("registered", &GIProbeLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<GIProbeLOD, bool>("ready_finished", &GIProbeLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<GIProbeLOD, bool>("interacted_with_manager", &GIProbeLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-
     register_property<GIProbeLOD, float>("fade_speed", &GIProbeLOD::fade_speed, 1.0f);
 
-    register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::enabled, true);
 }
 
 GIProbeLOD::GIProbeLOD() {
@@ -45,15 +42,15 @@ void GIProbeLOD::_init() {
 
 void GIProbeLOD::_exit_tree() {
     // Leave LOD manager's list.
-    enabled = false;
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
+    lc.unregister();
+
 }
 
 void GIProbeLOD::_enter_tree() {
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
-    if (!registered && ready_finished) {
-        enabled = true;
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    if (!lc.registered && lc.ready_finished) {
+        lc.unregister();
+        set_process(true);
     }
 }
 
@@ -71,6 +68,8 @@ void GIProbeLOD::_ready() {
     probe_base_energy = get_energy();
     probe_target_energy = probe_base_energy;
 
+    update_lod_AABB();
+    update_lod_multipliers_from_manager();
     lc.try_register();
     lc.ready_finished = true;
 }
@@ -99,13 +98,14 @@ void GIProbeLOD::process_data(Vector3 camera_location) {
 
 void GIProbeLOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!registered && enabled) {
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
     }
 
     // Fade GIProbe if needed
     real_t probe_energy = get_energy();
-    if (registered && enabled && (probe_energy != probe_target_energy)) {
+    if (lc.registered && (probe_energy != probe_target_energy)) {
         /// Lerp
         // If the probe energy wasn't 1, then the fade might be slower or faster
         // We don't want the speed to be dependent on energy, so multiply speed by base

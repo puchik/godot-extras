@@ -17,7 +17,7 @@ void LOD::_register_methods() {
     register_method("get_current_lod", &LOD::get_current_lod);
 
     // Inspector properties
-    register_property<LOD, bool>("enabled", &LOD::enabled, true);
+    register_property<LOD, bool>("enabled", &LOD::set_enabled, &LOD::get_enabled, true);
 
     // Whether to use distance multipliers from project settings
     register_property<LOD, bool>("affectedByDistanceMultipliers", &LOD::set_affected_by_distance, &LOD::get_affected_by_distance, true);
@@ -40,9 +40,6 @@ void LOD::_register_methods() {
     register_property<LOD, float>("lod3ratio", &LOD::lod3_ratio, 5.5f);
     register_property<LOD, float>("hideRatio", &LOD::hide_ratio, 1.0f);
     register_property<LOD, float>("unloadRatio", &LOD::unload_ratio, -1.0f);
-    register_property<LOD, bool>("registered", &LOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<LOD, bool>("ready_finished", &LOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<LOD, bool>("interacted_with_manager", &LOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     register_property<LOD, int>("max_shadow_caster", &LOD::max_shadow_caster, 0,
         GODOT_METHOD_RPC_MODE_DISABLED,
@@ -72,15 +69,14 @@ void LOD::_init() {
 
 void LOD::_exit_tree() {
     // Leave LOD manager's list.
-    enabled = false;
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
+    lc.unregister();
 }
 
 void LOD::_enter_tree() {
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
-    if (!registered && ready_finished) {
-        enabled = true;
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    if (!lc.registered && lc.ready_finished) {
+        lc.unregister();
+        set_process(true);
     }
 }
 
@@ -169,6 +165,8 @@ void LOD::_ready() {
         }
     }
 
+    update_lod_AABB();
+    update_lod_multipliers_from_manager();
     lc.try_register();
     lc.ready_finished = true;
 }
@@ -215,8 +213,9 @@ void LOD::process_data(Vector3 camera_location) {
 
 void LOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!registered && enabled) {
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
     }
 }
 

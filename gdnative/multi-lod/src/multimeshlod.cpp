@@ -9,6 +9,8 @@ void MultiMeshLOD::_register_methods() {
     register_method("_enter_tree", &MultiMeshLOD::_enter_tree);
     register_method("_exit_tree", &MultiMeshLOD::_exit_tree);
     register_method("process_data", &MultiMeshLOD::process_data);
+    // Inspector properties
+    register_property<MultiMeshLOD, bool>("enabled", &MultiMeshLOD::set_enabled, &MultiMeshLOD::get_enabled, true);
 
     // Exposed methods
     register_method("update_lod_AABB", &MultiMeshLOD::update_lod_AABB);
@@ -27,9 +29,6 @@ void MultiMeshLOD::_register_methods() {
 
     register_property<MultiMeshLOD, float>("minRatio", &MultiMeshLOD::min_ratio, 2.0f);
     register_property<MultiMeshLOD, float>("maxRatio", &MultiMeshLOD::max_ratio, 5.0f);
-    register_property<MultiMeshLOD, bool>("registered", &MultiMeshLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<MultiMeshLOD, bool>("ready_finished", &MultiMeshLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<MultiMeshLOD, bool>("interacted_with_manager", &MultiMeshLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     register_property<MultiMeshLOD, int64_t>("minCount", &MultiMeshLOD::min_count, 0); 
     register_property<MultiMeshLOD, int64_t>("maxCount", &MultiMeshLOD::max_count, -1); 
@@ -37,7 +36,6 @@ void MultiMeshLOD::_register_methods() {
     register_property<MultiMeshLOD, float>("fade_speed", &MultiMeshLOD::fade_speed, 1.0f);
     register_property<MultiMeshLOD, float>("fade_exponent", &MultiMeshLOD::fade_exponent, 1.0f);
 
-    register_property<MultiMeshLOD, bool>("enabled", &MultiMeshLOD::enabled, true);
 }
 
 MultiMeshLOD::MultiMeshLOD() {
@@ -52,15 +50,15 @@ void MultiMeshLOD::_init() {
 
 void MultiMeshLOD::_exit_tree() {
     // Leave LOD manager's list.
-    enabled = false;
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
+    lc.unregister();
+
 }
 
 void MultiMeshLOD::_enter_tree() {
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
-    if (!registered && ready_finished) {
-        enabled = true;
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    if (!lc.registered && lc.ready_finished) {
+        lc.unregister();
+        set_process(true);
     }
 }
 
@@ -81,6 +79,8 @@ void MultiMeshLOD::_ready() {
     }
     target_count = max_count;
 
+    update_lod_AABB();
+    update_lod_multipliers_from_manager();
     lc.try_register();
     lc.ready_finished = true;
 }
@@ -109,8 +109,9 @@ void MultiMeshLOD::process_data(Vector3 camera_location) {
 
 void MultiMeshLOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!registered && enabled) {
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
     }
 
     // Lerp visible instance count if needed

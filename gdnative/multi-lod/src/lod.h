@@ -262,7 +262,14 @@ public:
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
     void show_lod(int lod); // Show only this LOD, hide others
+
     inline int get_current_lod() { return current_lod; }
+
+    inline void set_enabled(bool value) { lc.enabled = value; }
+    inline bool get_enabled() { return lc.enabled; }
+
+    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
 
     inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
     inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
@@ -315,6 +322,12 @@ public:
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... we have the option to
     void update_lod_AABB(); // Update AABB only if necessary
 
+    inline void set_enabled(bool value) { lc.enabled = value; }
+    inline bool get_enabled() { return lc.enabled; }
+
+    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
+
     inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
     inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
 };
@@ -358,6 +371,12 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
+
+    inline void set_enabled(bool value) { lc.enabled = value; }
+    inline bool get_enabled() { return lc.enabled; }
+
+    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
 
     inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
     inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
@@ -407,6 +426,12 @@ public:
 
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
+
+    inline void set_enabled(bool value) { lc.enabled = value; }
+    inline bool get_enabled() { return lc.enabled; }
+
+    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
 
     inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
     inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }

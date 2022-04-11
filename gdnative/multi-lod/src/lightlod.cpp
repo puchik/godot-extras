@@ -8,6 +8,8 @@ void LightLOD::_register_methods() {
     register_method("_enter_tree", &LightLOD::_enter_tree);
     register_method("_exit_tree", &LightLOD::_exit_tree);
     register_method("process_data", &LightLOD::process_data);
+    // Inspector properties
+    register_property<LightLOD, bool>("enabled", &LightLOD::set_enabled, &LightLOD::get_enabled, true);
 
     // Whether to use distance multipliers from project settings
     register_property<LightLOD, bool>("affectedByDistanceMultipliers", &LightLOD::set_affected_by_distance, &LightLOD::get_affected_by_distance, true);
@@ -28,13 +30,8 @@ void LightLOD::_register_methods() {
     // Screen percentage ratios (and if applicable)
     register_property<LightLOD, float>("shadowRatio", &LightLOD::shadow_ratio, 6.0f);
     register_property<LightLOD, float>("hideRatio", &LightLOD::hide_ratio, 2.0f);
-    register_property<LightLOD, bool>("registered", &LightLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<LightLOD, bool>("ready_finished", &LightLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<LightLOD, bool>("interacted_with_manager", &LightLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
 
     register_property<LightLOD, float>("fade_speed", &LightLOD::fade_speed, 2.0f);
-
-    register_property<LightLOD, bool>("enabled", &LightLOD::enabled, true);
 }
 
 LightLOD::LightLOD() {
@@ -49,15 +46,15 @@ void LightLOD::_init() {
 
 void LightLOD::_exit_tree() {
     // Leave LOD manager's list.
-    enabled = false;
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
+    lc.unregister();
+
 }
 
 void LightLOD::_enter_tree() {
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
-    if (!registered && ready_finished) {
-        enabled = true;
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    if (!lc.registered && lc.ready_finished) {
+        lc.unregister();
+        set_process(true);
     }
 }
 
@@ -77,6 +74,8 @@ void LightLOD::_ready() {
     light_target_energy = light_base_energy;
     shadow_target_color = get_shadow_color();
 
+    update_lod_AABB();
+    update_lod_multipliers_from_manager();
     lc.try_register();
     lc.ready_finished = true;
 }
@@ -116,11 +115,12 @@ void LightLOD::process_data(Vector3 camera_location) {
 
 void LightLOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!registered && enabled) {
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
+    if (!lc.registered) {
+        lc.try_register();
+        set_process(false);
     }
 
-    if (registered && enabled) {
+    if (lc.registered) {
         // Fade light
         fade_light(delta);
         // Fade shadows
