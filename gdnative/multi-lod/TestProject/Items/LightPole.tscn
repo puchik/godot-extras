@@ -21,3 +21,5 @@ light_energy = 1.5
 light_indirect_energy = 1.5
 shadow_enabled = true
 script = ExtResource( 1 )
+shadowRatio = 15.0
+hideRatio = 10.0

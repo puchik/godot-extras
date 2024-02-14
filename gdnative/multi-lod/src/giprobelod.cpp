@@ -3,15 +3,14 @@
 using namespace godot;
 
 void GIProbeLOD::_register_methods() {
-    register_method("_process", &GIProbeLOD::_process);
-    register_method("_ready", &GIProbeLOD::_ready);
-    register_method("_enter_tree", &GIProbeLOD::_enter_tree);
-    register_method("_exit_tree", &GIProbeLOD::_exit_tree);
-    register_method("process_data", &GIProbeLOD::process_data);
+    // Inspector properties
+    register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::set_enabled, &GIProbeLOD::get_enabled, true);
 
-    // Exposed methods
-    register_method("update_lod_AABB", &GIProbeLOD::update_lod_AABB);
-    register_method("update_lod_multipliers_from_manager", &GIProbeLOD::update_lod_multipliers_from_manager);
+    // Whether to use distance multipliers from project settings
+    register_property<GIProbeLOD, bool>("affectedByDistanceMultipliers", &GIProbeLOD::set_affected_by_distance, &GIProbeLOD::get_affected_by_distance, true);
+
+    // Screen percentage ratios (and if applicable)
+    register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::set_use_screen_percentage, &GIProbeLOD::get_use_screen_percentage, true);
 
     // Vars for distance-based (in metres)
     // This will be set by the ratio if useScreenPercentage is true
@@ -19,20 +18,17 @@ void GIProbeLOD::_register_methods() {
     register_property<GIProbeLOD, float>("hideDist", &GIProbeLOD::hide_distance, 80.0f); 
     register_property<GIProbeLOD, float>("fade_range", &GIProbeLOD::fade_range, 5.0f);
 
-    // Screen percentage ratios (and if applicable)
-    register_property<GIProbeLOD, bool>("use_screen_percentage", &GIProbeLOD::use_screen_percentage, true);
     register_property<GIProbeLOD, float>("hideRatio", &GIProbeLOD::hide_ratio, 2.0f);
-    register_property<GIProbeLOD, float>("fov", &GIProbeLOD::fov, 70.0f, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<GIProbeLOD, bool>("registered", &GIProbeLOD::registered, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<GIProbeLOD, bool>("ready_finished", &GIProbeLOD::ready_finished, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-    register_property<GIProbeLOD, bool>("interacted_with_manager", &GIProbeLOD::interacted_with_manager, false, GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_NOEDITOR);
-
-    // Whether to use distance multipliers from project settings
-    register_property<GIProbeLOD, bool>("affected_by_distance_multipliers", &GIProbeLOD::affected_by_distance_multipliers, true);
-
     register_property<GIProbeLOD, float>("fade_speed", &GIProbeLOD::fade_speed, 1.0f);
 
-    register_property<GIProbeLOD, bool>("enabled", &GIProbeLOD::enabled, true);
+    // Exposed methods
+    register_method("_process", &GIProbeLOD::_process);
+    register_method("_ready", &GIProbeLOD::_ready);
+    register_method("_enter_tree", &GIProbeLOD::_enter_tree);
+    register_method("_exit_tree", &GIProbeLOD::_exit_tree);
+
+    register_method("update_lod_AABB", &GIProbeLOD::update_lod_AABB);
+    register_method("update_lod_multipliers_from_manager", &GIProbeLOD::update_lod_multipliers_from_manager);
 }
 
 GIProbeLOD::GIProbeLOD() {
@@ -46,22 +42,49 @@ void GIProbeLOD::_init() {
 
 void GIProbeLOD::_exit_tree() {
     // Leave LOD manager's list.
-    enabled = false;
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);
+    lod_component.unregister();
+
 }
 
 void GIProbeLOD::_enter_tree() {
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
-    if (!registered && ready_finished) {
-        enabled = true;
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), false);    
+    if (!lod_component.registered && lod_component.ready_finished) {
+        lod_component.unregister();
+        set_process(true);
+    }
+}
+
+void GIProbeLOD::_process(float delta) {
+    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
+    if (!lod_component.registered) {
+        lod_component.try_register();
+        set_process(false);
+    }
+
+    // Fade GIProbe if needed
+    real_t probe_energy = get_energy();
+    if (lod_component.registered && (probe_energy != probe_target_energy)) {
+        /// Lerp
+        // If the probe energy wasn't 1, then the fade might be slower or faster
+        // We don't want the speed to be dependent on energy, so multiply speed by base
+        probe_energy = probe_energy + ((probe_target_energy - probe_energy) * (fade_speed * probe_base_energy * delta));
+        set_energy(probe_energy);
+
+        if ((probe_energy < 0.05) && is_visible()) {
+            hide();
+        } else if ((probe_energy >= 0.05) && !is_visible()) {
+            show();
+        }
     }
 }
 
 void GIProbeLOD::_ready() {
+    lod_component.setup(Object::cast_to<Spatial>(this));
+    lod_component.lod_manager->debug_level_print(1, get_name() + String(": Initializing GIProbeLOD."));
+
     if (get_class() != "GIProbe") {
         ERR_PRINT(get_name() + ": A GIProbeLOD script is attached, but this is not a GIProbe!");
-        enabled = false;
+        lod_component.enabled = false;
         return;
     }
 
@@ -69,8 +92,10 @@ void GIProbeLOD::_ready() {
     probe_base_energy = get_energy();
     probe_target_energy = probe_base_energy;
 
-    LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
-    ready_finished = true;
+    update_lod_AABB();
+    update_lod_multipliers_from_manager();
+    lod_component.try_register();
+    lod_component.ready_finished = true;
 }
 
 void GIProbeLOD::process_data(Vector3 camera_location) {
@@ -95,52 +120,27 @@ void GIProbeLOD::process_data(Vector3 camera_location) {
 
 }
 
-void GIProbeLOD::_process(float delta) {
-    // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!registered && enabled) {
-        LODCommonFunctions::try_register(Object::cast_to<Node>(this), true);
-    }
-
-    // Fade GIProbe if needed
-    real_t probe_energy = get_energy();
-    if (registered && enabled && (probe_energy != probe_target_energy)) {
-        /// Lerp
-        // If the probe energy wasn't 1, then the fade might be slower or faster
-        // We don't want the speed to be dependent on energy, so multiply speed by base
-        probe_energy = probe_energy + ((probe_target_energy - probe_energy) * (fade_speed * probe_base_energy * delta));
-        set_energy(probe_energy);
-
-        if ((probe_energy < 0.05) && is_visible()) {
-            hide();
-        } else if ((probe_energy >= 0.05) && !is_visible()) {
-            show();
-        }
-    }
-}
-
 // Update the distances based on the AABB
 void GIProbeLOD::update_lod_AABB() {
-    AABB objAABB = get_transformed_aabb();
+    if (lod_component.use_screen_percentage) {
+        AABB objAABB = get_transformed_aabb();
 
-    if (objAABB.has_no_area()) {
-        ERR_PRINT(get_name() + ": Invalid AABB for this GIProbe!");
-        return;
+        if (objAABB.has_no_area()) {
+            ERR_PRINT(get_name() + ": Invalid AABB for this GIProbe!");
+            return;
+        }
+
+        // Get the longest axis (conservative estimate of the object size vs screen)
+        float longest_axis = objAABB.get_longest_axis_size();
+
+        // Get the distances at which we have the LOD ratios of the screen
+        hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * lod_component.get_tan_theta()));
     }
-
-    // Get the longest axis (conservative estimate of the object size vs screen)
-    float longest_axis = objAABB.get_longest_axis_size();
-
-    // Use an isosceles triangle to get a worst-case estimate of the distances
-    float tan_theta = LODCommonFunctions::lod_calculate_AABB_distance_tan_theta(fov);
-
-    // Get the distances at which we have the LOD ratios of the screen
-    hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * tan_theta));
 }
 
 void GIProbeLOD::update_lod_multipliers_from_manager() {
-    if (affected_by_distance_multipliers && get_node("/root/LodManager")) {
-        Node* lod_manager_node = get_node("/root/LodManager");
-        global_distance_multiplier = lod_manager_node->get("global_distance_multiplier");
+    if (lod_component.affected_by_distance_multipliers && lod_component.lod_manager) {
+        global_distance_multiplier = lod_component.lod_manager->global_distance_multiplier;
     } else {
         global_distance_multiplier = 1.0f;
     }
