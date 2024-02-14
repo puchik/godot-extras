@@ -1,5 +1,8 @@
 # godot-extras
+## This is the 3.x compatible version of this branch. It is largely unmaintained but I review incoming PRs when possible.
 My collection of various plugins, modules, or patches for Godot.
+
+Mostly optimization and shader work.
 
 Everything is licensed under MIT.
 
