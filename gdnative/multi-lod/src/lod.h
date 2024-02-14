@@ -142,6 +142,7 @@ public:
     int objects_per_frame = 10000;
 };
 
+//// Base parent for LOD types.
 class LODBaseComponent : public Reference {
     GODOT_CLASS(LODBaseComponent, Reference)
 protected:
@@ -197,7 +198,7 @@ class LOD : public VisualInstance {
     GODOT_CLASS(LOD, VisualInstance)
 
 private:
-    LODComponent<LOD> lc;
+    LODComponent<LOD> lod_component;
 
     // Distance by metres
     // These will be set by the ratios below if use_screen_percentage is true
@@ -266,14 +267,14 @@ public:
 
     inline int get_current_lod() { return current_lod; }
 
-    inline void set_enabled(bool value) { lc.enabled = value; }
-    inline bool get_enabled() { return lc.enabled; }
+    inline void set_enabled(bool value) { lod_component.enabled = value; }
+    inline bool get_enabled() { return lod_component.enabled; }
 
-    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
-    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
+    inline void set_affected_by_distance(bool value) { lod_component.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lod_component.affected_by_distance_multipliers; }
 
-    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
-    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
+    inline void set_use_screen_percentage(bool value) { lod_component.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lod_component.use_screen_percentage; }
 };
 
 //// Light detail (shadow and light itself) LOD ------------------------------------------------------------
@@ -281,7 +282,7 @@ class LightLOD : public Light {
     GODOT_CLASS(LightLOD, Light)
 
 private:
-    LODComponent<LightLOD> lc;
+    LODComponent<LightLOD> lod_component;
 
     float shadow_distance = 20.0f;
     float hide_distance = 80.0f; // -1 to never hide
@@ -323,14 +324,14 @@ public:
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... we have the option to
     void update_lod_AABB(); // Update AABB only if necessary
 
-    inline void set_enabled(bool value) { lc.enabled = value; }
-    inline bool get_enabled() { return lc.enabled; }
+    inline void set_enabled(bool value) { lod_component.enabled = value; }
+    inline bool get_enabled() { return lod_component.enabled; }
 
-    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
-    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
+    inline void set_affected_by_distance(bool value) { lod_component.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lod_component.affected_by_distance_multipliers; }
 
-    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
-    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
+    inline void set_use_screen_percentage(bool value) { lod_component.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lod_component.use_screen_percentage; }
 };
 
 //// GIProbe LOD -------------------------------------------------------------------
@@ -338,7 +339,7 @@ class GIProbeLOD : public GIProbe {
     GODOT_CLASS(GIProbeLOD, GIProbe)
 
 private:
-    LODComponent<GIProbeLOD> lc;
+    LODComponent<GIProbeLOD> lod_component;
 
     float hide_distance = 80.0f;
     float fade_range = 5.0f; // The energy of the probe will adjust from 0 to 1 between [unload_distance - fade_range, unload_distance]
@@ -373,14 +374,14 @@ public:
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
 
-    inline void set_enabled(bool value) { lc.enabled = value; }
-    inline bool get_enabled() { return lc.enabled; }
+    inline void set_enabled(bool value) { lod_component.enabled = value; }
+    inline bool get_enabled() { return lod_component.enabled; }
 
-    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
-    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
+    inline void set_affected_by_distance(bool value) { lod_component.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lod_component.affected_by_distance_multipliers; }
 
-    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
-    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
+    inline void set_use_screen_percentage(bool value) { lod_component.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lod_component.use_screen_percentage; }
 };
 
 //// MultiMeshInstance LOD -------------------------------------------------------------------
@@ -388,7 +389,7 @@ class MultiMeshLOD : public MultiMeshInstance {
     GODOT_CLASS(MultiMeshLOD, MultiMeshInstance)
 
 private:
-    LODComponent<MultiMeshLOD> lc;
+    LODComponent<MultiMeshLOD> lod_component;
 
     float min_distance = 5.0f; // At this distance, or below, we see max number of multimesh count
     float max_distance = 80.0f; // At this distance, or above, we see min (or none) number of multimesh count
@@ -428,14 +429,14 @@ public:
     void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
     void update_lod_AABB(); // Update AABB only if necessary
 
-    inline void set_enabled(bool value) { lc.enabled = value; }
-    inline bool get_enabled() { return lc.enabled; }
+    inline void set_enabled(bool value) { lod_component.enabled = value; }
+    inline bool get_enabled() { return lod_component.enabled; }
 
-    inline void set_affected_by_distance(bool value) { lc.affected_by_distance_multipliers = value; }
-    inline bool get_affected_by_distance() { return lc.affected_by_distance_multipliers; }
+    inline void set_affected_by_distance(bool value) { lod_component.affected_by_distance_multipliers = value; }
+    inline bool get_affected_by_distance() { return lod_component.affected_by_distance_multipliers; }
 
-    inline void set_use_screen_percentage(bool value) { lc.use_screen_percentage = value; }
-    inline bool get_use_screen_percentage() { return lc.use_screen_percentage; }
+    inline void set_use_screen_percentage(bool value) { lod_component.use_screen_percentage = value; }
+    inline bool get_use_screen_percentage() { return lod_component.use_screen_percentage; }
 };
 
 }

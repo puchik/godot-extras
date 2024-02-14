@@ -52,7 +52,7 @@ void LOD::_register_methods() {
     register_method("update_lod_multipliers_from_manager", &LOD::update_lod_multipliers_from_manager);
     register_method("get_current_lod", &LOD::get_current_lod);
 
-    //Signals
+    // Signals
     register_signal<LOD>("lod_changed", "lod", GODOT_VARIANT_TYPE_INT);
     register_signal<LOD>("freed");
 }
@@ -69,28 +69,28 @@ void LOD::_init() {
 
 void LOD::_exit_tree() {
     // Leave LOD manager's list.
-    lc.unregister();
+    lod_component.unregister();
 }
 
 void LOD::_enter_tree() {
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
-    if (!lc.registered && lc.ready_finished) {
-        lc.unregister();
+    if (!lod_component.registered && lod_component.ready_finished) {
+        lod_component.unregister();
         set_process(true);
     }
 }
 
 void LOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!lc.registered) {
-        lc.try_register();
+    if (!lod_component.registered) {
+        lod_component.try_register();
         set_process(false);
     }
 }
 
 void LOD::_ready() {
-    lc.setup(Object::cast_to<Spatial>(this));
-    lc.lod_manager->debug_level_print(1, get_name() + String(": Initializing Mesh LOD."));
+    lod_component.setup(Object::cast_to<Spatial>(this));
+    lod_component.lod_manager->debug_level_print(1, get_name() + String(": Initializing Mesh LOD."));
 
     /// Get the VisualInstance objects for LOD nodes
     // If there's no path, search for any children with "LOD + n" in its name
@@ -175,8 +175,8 @@ void LOD::_ready() {
 
     update_lod_AABB();
     update_lod_multipliers_from_manager();
-    lc.try_register();
-    lc.ready_finished = true;
+    lod_component.try_register();
+    lod_component.ready_finished = true;
 }
 
 void LOD::process_data(Vector3 camera_location) {
@@ -190,7 +190,7 @@ void LOD::process_data(Vector3 camera_location) {
         return;
     }
  
-    if (lc.use_screen_percentage) {
+    if (lod_component.use_screen_percentage) {
         object_location -= transform_offset_AABB;
     }
     float distance = camera_location.distance_to(object_location);
@@ -268,13 +268,13 @@ void LOD::update_lod_AABB() {
     // Get the offset of the parent position and the overall AABB
     transform_offset_AABB = get_global_transform().origin - (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f));
 
-    if (lc.use_screen_percentage) {
+    if (lod_component.use_screen_percentage) {
         // Get the longest axis (conservative estimate of the object size vs screen)
         float longest_axis = object_AABB.get_longest_axis_size();
 
         // Use an isosceles triangle to get a worst-case estimate of the distances
         // Don't forget the degrees to radians conversion
-        float tan_theta = lc.get_tan_theta();
+        float tan_theta = lod_component.get_tan_theta();
 
         // Get the distances at which we have the LOD ratios of the screen
         lod1_distance = ((longest_axis / (lod1_ratio / 100.0f)) / (2.0f * tan_theta));
@@ -285,13 +285,13 @@ void LOD::update_lod_AABB() {
 }
 
 void LOD::update_lod_multipliers_from_manager() {
-    if (lc.affected_by_distance_multipliers && lc.lod_manager) { 
-        global_distance_multiplier = lc.lod_manager->global_distance_multiplier;
-        lod1_distance_multiplier = lc.lod_manager->lod1_distance_multiplier;
-        lod2_distance_multiplier = lc.lod_manager->lod2_distance_multiplier;
-        lod3_distance_multiplier = lc.lod_manager->lod3_distance_multiplier;
-        hide_distance_multiplier = lc.lod_manager->hide_distance_multiplier;
-        unload_distance_multiplier = lc.lod_manager->unload_distance_multiplier;
+    if (lod_component.affected_by_distance_multipliers && lod_component.lod_manager) { 
+        global_distance_multiplier = lod_component.lod_manager->global_distance_multiplier;
+        lod1_distance_multiplier = lod_component.lod_manager->lod1_distance_multiplier;
+        lod2_distance_multiplier = lod_component.lod_manager->lod2_distance_multiplier;
+        lod3_distance_multiplier = lod_component.lod_manager->lod3_distance_multiplier;
+        hide_distance_multiplier = lod_component.lod_manager->hide_distance_multiplier;
+        unload_distance_multiplier = lod_component.lod_manager->unload_distance_multiplier;
     } else {
         global_distance_multiplier = 1.0f;
         lod1_distance_multiplier = 1.0f;

@@ -200,7 +200,7 @@ void LODManager::lod_function() {
                 }
 
                 // Pass camera location and do calculations on LOD object
-                debug_level_print(2, "LODManager: It does. Calling the process_data function with the camera found.");
+                debug_level_print(2, "LODManager: Calling the process_data function with the camera found.");
                 lbc->process_data(camera_location);
             }
             if (manager_removed) {

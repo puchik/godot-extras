@@ -42,28 +42,28 @@ void GIProbeLOD::_init() {
 
 void GIProbeLOD::_exit_tree() {
     // Leave LOD manager's list.
-    lc.unregister();
+    lod_component.unregister();
 
 }
 
 void GIProbeLOD::_enter_tree() {
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
-    if (!lc.registered && lc.ready_finished) {
-        lc.unregister();
+    if (!lod_component.registered && lod_component.ready_finished) {
+        lod_component.unregister();
         set_process(true);
     }
 }
 
 void GIProbeLOD::_process(float delta) {
     // Enter manager's list if not already done so (possibly due to timing issues upon game load)
-    if (!lc.registered) {
-        lc.try_register();
+    if (!lod_component.registered) {
+        lod_component.try_register();
         set_process(false);
     }
 
     // Fade GIProbe if needed
     real_t probe_energy = get_energy();
-    if (lc.registered && (probe_energy != probe_target_energy)) {
+    if (lod_component.registered && (probe_energy != probe_target_energy)) {
         /// Lerp
         // If the probe energy wasn't 1, then the fade might be slower or faster
         // We don't want the speed to be dependent on energy, so multiply speed by base
@@ -79,12 +79,12 @@ void GIProbeLOD::_process(float delta) {
 }
 
 void GIProbeLOD::_ready() {
-    lc.setup(Object::cast_to<Spatial>(this));
-    lc.lod_manager->debug_level_print(1, get_name() + String(": Initializing GIProbeLOD."));
+    lod_component.setup(Object::cast_to<Spatial>(this));
+    lod_component.lod_manager->debug_level_print(1, get_name() + String(": Initializing GIProbeLOD."));
 
     if (get_class() != "GIProbe") {
         ERR_PRINT(get_name() + ": A GIProbeLOD script is attached, but this is not a GIProbe!");
-        lc.enabled = false;
+        lod_component.enabled = false;
         return;
     }
 
@@ -94,8 +94,8 @@ void GIProbeLOD::_ready() {
 
     update_lod_AABB();
     update_lod_multipliers_from_manager();
-    lc.try_register();
-    lc.ready_finished = true;
+    lod_component.try_register();
+    lod_component.ready_finished = true;
 }
 
 void GIProbeLOD::process_data(Vector3 camera_location) {
@@ -122,7 +122,7 @@ void GIProbeLOD::process_data(Vector3 camera_location) {
 
 // Update the distances based on the AABB
 void GIProbeLOD::update_lod_AABB() {
-    if (lc.use_screen_percentage) {
+    if (lod_component.use_screen_percentage) {
         AABB objAABB = get_transformed_aabb();
 
         if (objAABB.has_no_area()) {
@@ -134,13 +134,13 @@ void GIProbeLOD::update_lod_AABB() {
         float longest_axis = objAABB.get_longest_axis_size();
 
         // Get the distances at which we have the LOD ratios of the screen
-        hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * lc.get_tan_theta()));
+        hide_distance = ((longest_axis / (hide_ratio / 100.0f)) / (2.0f * lod_component.get_tan_theta()));
     }
 }
 
 void GIProbeLOD::update_lod_multipliers_from_manager() {
-    if (lc.affected_by_distance_multipliers && lc.lod_manager) {
-        global_distance_multiplier = lc.lod_manager->global_distance_multiplier;
+    if (lod_component.affected_by_distance_multipliers && lod_component.lod_manager) {
+        global_distance_multiplier = lod_component.lod_manager->global_distance_multiplier;
     } else {
         global_distance_multiplier = 1.0f;
     }
