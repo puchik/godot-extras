@@ -1,5 +1,9 @@
 # godot-extras
+## NOTE: The main branch is a WIP of porting to Godot 4! Up-to-date and functional projects are on the 3.x at this time!
+## Undergoing some restructuring right now!
 My collection of various plugins, modules, or patches for Godot.
+
+Mostly optimization and shaders.
 
 Everything is licensed under MIT.
 
@@ -11,7 +15,3 @@ A shader that was originally intended for terrains, but can be applied to any me
 
 ## [Snow shader](https://github.com/puchik/godot-extras/tree/master/tutorials/snow-shader)
 This was supposed to be for a tutorial video, but I kept never getting to it. I decided to, at least, release the tutorial files (including the full shader).
-
-## [4 GIProbe blending patch](https://github.com/puchik/godot-extras/tree/master/patches/giprobe-blending)
-A minor (only tested on my system, not sure if there will be problems on others!) that allows 4 GIProbes (up from 2) to affect and blend on a single object. This is important
-for the [GIProbe LOD](https://github.com/puchik/godot-extras/tree/master/gdnative/multi-lod). It also compensates non-interior environment lighting if you're lowering/the GIProbe doesn't cover an object fully. Normally, the areas not covered by the GIProbe (or if you lower energy) aren't affected by ambient/environment lighting at all (think enabling the "Interior" option).
