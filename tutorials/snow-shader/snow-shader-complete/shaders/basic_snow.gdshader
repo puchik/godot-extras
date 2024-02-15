@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode blend_mix,depth_draw_opaque,cull_disabled,diffuse_burley,specular_schlick_ggx;
+render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
 
 uniform float snow_threshold : hint_range(0, 1.1) = 0.6;
 uniform float snow_blend_range : hint_range(0, 0.9) = 0.1;
@@ -7,16 +7,14 @@ uniform float snow_blend_range : hint_range(0, 0.9) = 0.1;
 uniform float specular = 0.5;
 uniform float metallic = 0.0;
 
-uniform vec4 albedo : hint_color;
-uniform sampler2D texture_albedo : hint_albedo;
-uniform float alpha_cutout : hint_range(0, 1);
-uniform float transmission : hint_range(0, 1) = 0.5;
+uniform vec4 albedo : source_color;
+uniform sampler2D texture_albedo : source_color;
 uniform sampler2D texture_normal : hint_normal;
 uniform float normal_scale : hint_range(-16,16) = 1.0;
 uniform float roughness : hint_range(0,1) = 0.9;
 
-uniform vec4 albedo_snow : hint_color;
-uniform sampler2D texture_albedo_snow : hint_albedo;
+uniform vec4 albedo_snow : source_color;
+uniform sampler2D texture_albedo_snow : source_color;
 uniform sampler2D texture_normal_snow : hint_normal;
 uniform float normal_scale_snow : hint_range(-16,16) = 1.0;
 uniform float roughness_snow : hint_range(0,1) = 0.75;
@@ -53,9 +51,9 @@ void fragment() {
 	
 	/// Calculation including the normal map
 	// Get TBN matrix
-	vec3 T = (vec4(TANGENT, 0.0) * INV_CAMERA_MATRIX).xyz;
-	vec3 B = (vec4(BINORMAL, 0.0) * INV_CAMERA_MATRIX).xyz;
-	vec3 N = (vec4(NORMAL, 0.0) * INV_CAMERA_MATRIX).xyz;
+	vec3 T = (vec4(TANGENT, 0.0) * VIEW_MATRIX).xyz;
+	vec3 B = (vec4(BINORMAL, 0.0) * VIEW_MATRIX).xyz;
+	vec3 N = (vec4(NORMAL, 0.0) * VIEW_MATRIX).xyz;
 	mat3 TBN = mat3(T, B, -N);
 	
 	// Calculate blend factor
@@ -70,10 +68,7 @@ void fragment() {
 	
 	// Apply final blended textures
 	ALBEDO = final_albedo;
-	NORMALMAP = final_normal;
-	NORMALMAP_DEPTH = final_normal_scale;
+	NORMAL_MAP = final_normal;
+	NORMAL_MAP_DEPTH = final_normal_scale;
 	ROUGHNESS = final_roughness;
-	ALPHA = albedo_tex.a;
-	ALPHA_SCISSOR = alpha_cutout;
-	TRANSMISSION = vec3(transmission);
 }

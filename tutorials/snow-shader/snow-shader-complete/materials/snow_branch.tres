@@ -1,10 +1,10 @@
 [gd_resource type="ShaderMaterial" load_steps=6 format=2]
 
-[ext_resource path="res://shaders/snow_branch.shader" type="Shader" id=1]
-[ext_resource path="res://textures/tree/branch.png" type="Texture" id=2]
-[ext_resource path="res://textures/snow/snow_02_nor_gl_1k.jpg" type="Texture" id=3]
-[ext_resource path="res://textures/snow/snow_02_diff_2k.jpg" type="Texture" id=4]
-[ext_resource path="res://textures/tree/branch_normal.jpg" type="Texture" id=5]
+[ext_resource path="res://shaders/snow_branch.gdshader" type="Shader" id=1]
+[ext_resource path="res://textures/tree/branch.png" type="Texture2D" id=2]
+[ext_resource path="res://textures/snow/snow_02_nor_gl_1k.jpg" type="Texture2D" id=3]
+[ext_resource path="res://textures/snow/snow_02_diff_2k.jpg" type="Texture2D" id=4]
+[ext_resource path="res://textures/tree/branch_normal.jpg" type="Texture2D" id=5]
 
 [resource]
 shader = ExtResource( 1 )
