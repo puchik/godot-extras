@@ -1,38 +1,40 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=3 uid="uid://b2wfxmq6fxb0e"]
 
-[ext_resource path="res://models/land/scene/land.tscn" type="PackedScene" id=1]
-[ext_resource path="res://textures/felsenlabyrinth_2k.hdr" type="Texture" id=2]
-[ext_resource path="res://assets/maujoe.basic_water_material/materials/basic_water_material.material" type="Material" id=3]
+[ext_resource type="PackedScene" uid="uid://dsn2ji0w3vpdu" path="res://models/land/scene/land.tscn" id="1"]
+[ext_resource type="Texture2D" uid="uid://dn4v8qb3b1d1o" path="res://textures/felsenlabyrinth_2k.hdr" id="2"]
+[ext_resource type="Material" path="res://assets/maujoe.basic_water_material/materials/basic_water_material.material" id="3"]
 
-[sub_resource type="PanoramaSky" id=1]
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_bitae"]
+panorama = ExtResource("2")
+
+[sub_resource type="Sky" id="1"]
+sky_material = SubResource("PanoramaSkyMaterial_bitae")
 radiance_size = 4
-panorama = ExtResource( 2 )
 
-[sub_resource type="Environment" id=2]
+[sub_resource type="Environment" id="2"]
 background_mode = 2
-background_sky = SubResource( 1 )
-background_energy = 0.8
+sky = SubResource("1")
 ambient_light_sky_contribution = 0.0
-ss_reflections_fade_in = 0.0588438
-ss_reflections_fade_out = 0.176777
+ssr_fade_in = 0.0588438
+ssr_fade_out = 0.176777
+sdfgi_read_sky_light = false
 
-[sub_resource type="PlaneMesh" id=3]
-size = Vector2( 10, 20 )
+[sub_resource type="PlaneMesh" id="3"]
+size = Vector2(10, 20)
 
-[node name="TestScene" type="Spatial"]
+[node name="TestScene" type="Node3D"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource( 2 )
+environment = SubResource("2")
 
-[node name="land" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.700273, 0.917555, 3.59738 )
+[node name="land" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.700273, 0.917555, 3.59738)
 
-[node name="Water" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.72606, 1.45069, 3.37835 )
-use_in_baked_light = true
-mesh = SubResource( 3 )
-material/0 = ExtResource( 3 )
+[node name="Water" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.72606, 1.45069, 3.37835)
+material_override = ExtResource("3")
+mesh = SubResource("3")
 
-[node name="Sun" type="DirectionalLight" parent="."]
-transform = Transform( 0.91487, 0.188739, -0.356918, 0.00757854, 0.875827, 0.482565, 0.403678, -0.444189, 0.799838, 0, 3.02276, 0 )
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.91487, 0.188739, -0.356918, 0.00757854, 0.875827, 0.482565, 0.403678, -0.444189, 0.799838, 0, 3.02276, 0)
 shadow_enabled = true

@@ -3,32 +3,32 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://q2qxpskkav85"
-path="res://.godot/imported/land.glb-d216ac5b3570eb6b07c65b9162e5ba53.scn"
+uid="uid://d3wnhr6hf0xg0"
+path="res://.godot/imported/wood_path.glb-e389e0ae2e138d3e0de8bdd658983598.scn"
 
 [deps]
 
-source_file="res://models/land/model/land.glb"
-dest_files=["res://.godot/imported/land.glb-d216ac5b3570eb6b07c65b9162e5ba53.scn"]
+source_file="res://models/land/model/wood_path.glb"
+dest_files=["res://.godot/imported/wood_path.glb-e389e0ae2e138d3e0de8bdd658983598.scn"]
 
 [params]
 
-nodes/root_type="Node3D"
-nodes/root_name="Scene Root"
+nodes/root_type=""
+nodes/root_name=""
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
 meshes/ensure_tangents=true
 meshes/generate_lods=true
 meshes/create_shadow_meshes=true
-meshes/light_baking=0
-meshes/lightmap_texel_size=0.1
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
 meshes/force_disable_compression=false
 skins/use_named_skins=true
-animation/import=false
-animation/fps=15
+animation/import=true
+animation/fps=30
 animation/trimming=false
 animation/remove_immutable_tracks=true
 import_script/path=""
 _subresources={}
-gltf/naming_version=0
+gltf/naming_version=1
 gltf/embedded_image_handling=1

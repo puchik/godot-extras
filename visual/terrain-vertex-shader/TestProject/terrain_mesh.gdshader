@@ -7,14 +7,14 @@ render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlic
 
 //// Texture 1
 // Albedo
-uniform vec4 albedo_1 : hint_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform sampler2D texture_albedo_1 : hint_albedo;
+uniform vec4 albedo_1 : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform sampler2D texture_albedo_1 : source_color;
 // Metallic
 uniform float metallic_1 : hint_range(0,1);
 //uniform sampler2D texture_metallic_1 : hint_white;
 // Roughness
 uniform float roughness_1 : hint_range(0,1.5) = 0.8;
-uniform sampler2D texture_roughness_1 : hint_white;
+uniform sampler2D texture_roughness_1 : hint_default_white;
 // Normal
 uniform sampler2D texture_normal_1 : hint_normal;
 uniform float normal_scale_1 : hint_range(-16,16) = 1.0;
@@ -22,7 +22,7 @@ uniform float normal_scale_1 : hint_range(-16,16) = 1.0;
 //uniform sampler2D texture_ao_1 : hint_white;
 //uniform float ao_light_affect_1 : hint_range(0,1);
 // Depth
-uniform sampler2D texture_depth_1 : hint_black;
+uniform sampler2D texture_depth_1 : hint_default_black;
 uniform float depth_scale_1 : hint_range(-16,16) = 0.05;
 uniform vec2 depth_flip_1 = vec2(1.0, 1.0); // first = tangent, second = binormal
 uniform bool use_depth_1;
@@ -36,14 +36,14 @@ uniform vec3 uv2_tex1_offset;
 
 //// Texture 2
 // Albedo
-uniform vec4 albedo_2 : hint_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform sampler2D texture_albedo_2 : hint_albedo;
+uniform vec4 albedo_2 : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform sampler2D texture_albedo_2 : source_color;
 // Metallic
 uniform float metallic_2 : hint_range(0,1);
 //uniform sampler2D texture_metallic_2 : hint_white;
 // Roughness
 uniform float roughness_2 : hint_range(0,1.5) = 0.8;
-uniform sampler2D texture_roughness_2 : hint_white;
+uniform sampler2D texture_roughness_2 : hint_default_white;
 // Normal
 uniform sampler2D texture_normal_2 : hint_normal;
 uniform float normal_scale_2 : hint_range(-16,16) = 1.0;
@@ -51,7 +51,7 @@ uniform float normal_scale_2 : hint_range(-16,16) = 1.0;
 //uniform sampler2D texture_ao_2 : hint_white;
 //uniform float ao_light_affect_2 : hint_range(0,1);
 // Depth
-uniform sampler2D texture_depth_2 : hint_black;
+uniform sampler2D texture_depth_2 : hint_default_black;
 uniform float depth_scale_2 : hint_range(-16,16) = 0.05;
 uniform vec2 depth_flip_2 = vec2(1.0, 1.0); // first = tangent, second = binormal
 uniform bool use_depth_2;
@@ -65,14 +65,14 @@ uniform vec3 uv2_tex2_offset;
 
 //// Texture 3
 // Albedo
-uniform vec4 albedo_3 : hint_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform sampler2D texture_albedo_3 : hint_albedo;
+uniform vec4 albedo_3 : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform sampler2D texture_albedo_3 : source_color;
 // Metallic
 uniform float metallic_3 : hint_range(0,1);
 //uniform sampler2D texture_metallic_3 : hint_white;
 // Roughness
 uniform float roughness_3 : hint_range(0,1.5) = 0.8;
-uniform sampler2D texture_roughness_3 : hint_white;
+uniform sampler2D texture_roughness_3 : hint_default_white;
 // Normal
 uniform sampler2D texture_normal_3 : hint_normal;
 uniform float normal_scale_3 : hint_range(-16,16) = 1.0;
@@ -80,7 +80,7 @@ uniform float normal_scale_3 : hint_range(-16,16) = 1.0;
 //uniform sampler2D texture_ao_3 : hint_white;
 //uniform float ao_light_affect_3 : hint_range(0,1);
 // Depth
-uniform sampler2D texture_depth_3 : hint_black;
+uniform sampler2D texture_depth_3 : hint_default_black;
 uniform float depth_scale_3 : hint_range(-16,16) = 0.05;
 uniform vec2 depth_flip_3 = vec2(1.0, 1.0); // first = tangent, second = binormal
 uniform bool use_depth_3;
@@ -94,14 +94,14 @@ uniform vec3 uv2_tex3_offset;
 
 //// Texture 4
 // Albedo
-uniform vec4 albedo_4 : hint_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform sampler2D texture_albedo_4 : hint_albedo;
+uniform vec4 albedo_4 : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform sampler2D texture_albedo_4 : source_color;
 // Metallic
 uniform float metallic_4 : hint_range(0,1);
 //uniform sampler2D texture_metallic_4 : hint_white;
 // Roughness
 uniform float roughness_4 : hint_range(0.0,1.5) = 0.8;
-uniform sampler2D texture_roughness_4 : hint_white;
+uniform sampler2D texture_roughness_4 : hint_default_white;
 // Normal
 uniform sampler2D texture_normal_4 : hint_normal;
 uniform float normal_scale_4 : hint_range(-16,16) = 1.0;
@@ -109,7 +109,7 @@ uniform float normal_scale_4 : hint_range(-16,16) = 1.0;
 //uniform sampler2D texture_ao_4 : hint_white;
 //uniform float ao_light_affect_4 : hint_range(0,1);
 // Depth
-uniform sampler2D texture_depth_4 : hint_black;
+uniform sampler2D texture_depth_4 : hint_default_black;
 uniform float depth_scale_4 : hint_range(-16,16) = 0.05;
 uniform vec2 depth_flip_4 = vec2(1.0, 1.0); // first = tangent, second = binormal
 uniform bool use_depth_4;
@@ -150,7 +150,7 @@ uniform float cull_max_dist = 100.0;
 
 //// Anti-tiling
 uniform bool prevent_tiling;
-uniform sampler2D noise_tex : hint_white;
+uniform sampler2D noise_tex : hint_default_white;
 
 //// Blending
 uniform bool height_blend = true; 
@@ -171,10 +171,10 @@ uniform float height_multiplier_4 : hint_range(0.0, 10.0) = 1.0;
 
 //// Colour and terrain shape settings
 uniform bool use_height_map = false;
-uniform sampler2D height_map : hint_white;
+uniform sampler2D height_map : hint_default_white;
 uniform float height_map_scale = 1.0;
 uniform bool use_splat_map = false;
-uniform sampler2D splat_map : hint_white;
+uniform sampler2D splat_map : hint_default_white;
 
 void vertex() {
 	UV=UV*uv1_scale.xy+uv1_offset.xy;
@@ -461,17 +461,17 @@ void fragment() {
 	vec3 normal_mix_3 = proj_texture(texture_normal_3, texture_UV_3).rgb;
 	vec3 normal_mix_4 = proj_texture(texture_normal_4, texture_UV_4).rgb;
 	if (height_blend) {
-		NORMALMAP = height_blend_vec3(normal_mix_1, height_1_value, color_1,
+		NORMAL_MAP = height_blend_vec3(normal_mix_1, height_1_value, color_1,
 				normal_mix_2, height_2_value, color_2,
 				normal_mix_3, height_3_value, color_3,
 				normal_mix_4, height_4_value, color_4);
-		NORMALMAP_DEPTH = height_blend_float(normal_scale_1, height_1_value, color_1,
+		NORMAL_MAP_DEPTH = height_blend_float(normal_scale_1, height_1_value, color_1,
 				normal_scale_2, height_2_value, color_2,
 				normal_scale_3, height_3_value, color_3,
 				normal_scale_4, height_4_value, color_4);
 	} else {
-		NORMALMAP = normal_mix_1 * color_1 + normal_mix_2 * color_2 + normal_mix_3 * color_3 + normal_mix_4 * color_4;
-		NORMALMAP_DEPTH = normal_scale_1 * color_1 + normal_scale_2 * color_2 + normal_scale_3 * color_3 + normal_scale_4 * color_4;
+		NORMAL_MAP = normal_mix_1 * color_1 + normal_mix_2 * color_2 + normal_mix_3 * color_3 + normal_mix_4 * color_4;
+		NORMAL_MAP_DEPTH = normal_scale_1 * color_1 + normal_scale_2 * color_2 + normal_scale_3 * color_3 + normal_scale_4 * color_4;
 	}
 
 	// Apply ambient occlusion mixes ------------------------------------------------------------------------------------------------	
