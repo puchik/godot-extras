@@ -5,9 +5,9 @@ using namespace godot;
 void LODBaseComponent::setup(Node3D* p_object) {
     if (p_object) {
         lod_object = p_object;
-        Node* lm = lod_object->get_node_or_null(NodePath("/root/LODManager"));
-        if (lm) {
-            lod_manager = Object::cast_to<LODManager>(lm);
+        Node* lod_manager_node = lod_object->get_node_or_null(NodePath("/root/LODManager"));
+        if (lod_manager_node) {
+            lod_manager = Object::cast_to<LODManager>(lod_manager_node);
         }
         if (!lod_manager) {
             ERR_PRINT("Error, can't find /root/LODManager. Make sure plugin is enabled.");

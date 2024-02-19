@@ -6,108 +6,86 @@ using namespace godot;
 
 void LOD::_bind_methods() {
     // Inspector properties
-    
-    //register_property<LOD, bool>("enabled", &LOD::set_enabled, &LOD::get_enabled, true);
     ClassDB::bind_method(D_METHOD("get_enabled"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_enabled", "p_enabled"), &LOD::set_enabled);
     ClassDB::add_property("LOD", PropertyInfo(Variant::BOOL, "enabled"), "set_enabled", "get_enabled");
 
     // Whether to use distance multipliers from project settings
-    //register_property<LOD, bool>("affectedByDistanceMultipliers", &LOD::set_affected_by_distance, &LOD::get_affected_by_distance, true);
     ClassDB::bind_method(D_METHOD("get_affected_by_distance_multipliers"), &LODBaseComponent::get_affected_by_distance_multipliers);
     ClassDB::bind_method(D_METHOD("set_affected_by_distance_multipliers", "p_affected_by_distance_multipliers"), &LODBaseComponent::set_affected_by_distance_multipliers);
     ClassDB::add_property("LODBaseComponent", PropertyInfo(Variant::BOOL, "affected_by_distance_multipliers"), "set_affected_by_distance_multipliers", "get_affected_by_distance_multipliers");
 
     // Screen percentage ratios (and if applicable)
-    //register_property<LOD, bool>("use_screen_percentage", &LOD::set_use_screen_percentage, &LOD::get_use_screen_percentage, true);
     ClassDB::bind_method(D_METHOD("get_use_screen_percentage"), &LOD::get_use_screen_percentage);
     ClassDB::bind_method(D_METHOD("set_use_screen_percentage", "p_use_screen_percentage"), &LOD::set_use_screen_percentage);
     ClassDB::add_property("LOD", PropertyInfo(Variant::BOOL, "use_screen_percentage"), "set_use_screen_percentage", "get_use_screen_percentage");
 
     // Vars for distance-based (in metres)
     // These will be set by the ratios if use_screen_percentage is true
-    // Distance and ratio exposed names and variable names do not match to avoid massive compatability breakage with an older version of the addon.
-    //register_property<LOD, float>("lod1dist", &LOD::lod1_distance, 7.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
     ClassDB::bind_method(D_METHOD("get_lod1_distance"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_lod1_distance", "p_lod1_distance"), &LOD::set_lod1_distance);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "lod1_distance"), "set_lod1_distance", "get_lod1_distance");
-    //register_property<LOD, float>("lod2dist", &LOD::lod2_distance, 12.0f);
+
     ClassDB::bind_method(D_METHOD("get_lod2_distance"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_lod2_distance", "p_lod2_distance"), &LOD::set_lod2_distance);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "lod2_distance"), "set_lod2_distance", "get_lod2_distance");
-    //register_property<LOD, float>("lod3dist", &LOD::lod3_distance, 30.0f);
+
     ClassDB::bind_method(D_METHOD("get_lod3_distance"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_lod3_distance", "p_lod3_distance"), &LOD::set_lod3_distance);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "lod3_distance"), "set_lod3_distance", "get_lod3_distance");
-    //register_property<LOD, float>("hideDist", &LOD::hide_distance, 100.0f);
+
     ClassDB::bind_method(D_METHOD("get_hide_distance"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_hide_distance", "p_hide_distance"), &LOD::set_hide_distance);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "hide_distance"), "set_hide_distance", "get_hide_distance");
-    //register_property<LOD, float>("unloadDist", &LOD::unload_distance, -1.0f);
+
     ClassDB::bind_method(D_METHOD("get_unload_distance"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_unload_distance", "p_unload_distance"), &LOD::set_unload_distance);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "unload_distance"), "set_unload_distance", "get_unload_distance");
 
     // Screen percentage ratios (and if applicable)
-    //register_property<LOD, float>("lod1ratio", &LOD::lod1_ratio, 25.0f); // put any of these to -1 if you don't have the lod for it, don't want to hide/unload etc
     ClassDB::bind_method(D_METHOD("get_lod1_ratio"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_lod1_ratio", "p_lod1_ratio"), &LOD::set_lod1_ratio);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "lod1_ratio"), "set_lod1_ratio", "get_lod1_ratio");
-    //register_property<LOD, float>("lod2ratio", &LOD::lod2_ratio, 10.0f);
+
     ClassDB::bind_method(D_METHOD("get_lod2_ratio"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_lod2_ratio", "p_lod2_ratio"), &LOD::set_lod2_ratio);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "lod2_ratio"), "set_lod2_ratio", "get_lod2_ratio");
-    //register_property<LOD, float>("lod3ratio", &LOD::lod3_ratio, 5.5f);
+
     ClassDB::bind_method(D_METHOD("get_lod3_ratio"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_lod3_ratio", "p_lod3_ratio"), &LOD::set_lod3_ratio);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "lod3_ratio"), "set_lod3_ratio", "get_lod3_ratio");
-    //register_property<LOD, float>("hideRatio", &LOD::hide_ratio, 1.0f);
+
     ClassDB::bind_method(D_METHOD("get_hide_ratio"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_hide_ratio", "p_hide_ratio"), &LOD::set_hide_ratio);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "hide_ratio"), "set_hide_ratio", "get_hide_ratio");
-    //register_property<LOD, float>("unloadRatio", &LOD::unload_ratio, -1.0f);
+
     ClassDB::bind_method(D_METHOD("get_unload_ratio"), &LOD::get_enabled);
     ClassDB::bind_method(D_METHOD("set_unload_ratio", "p_unload_ratio"), &LOD::set_unload_ratio);
     ClassDB::add_property("LOD", PropertyInfo(Variant::FLOAT, "unload_ratio"), "set_unload_ratio", "get_unload_ratio");
 
-    //register_property<LOD, NodePath>("lod0_path", &LOD::lod0_path, NodePath());
     ClassDB::bind_method(D_METHOD("get_lod0_path"), &LOD::get_lod0_path);
     ClassDB::bind_method(D_METHOD("set_lod0_path", "p_lod0_path"), &LOD::set_lod0_path);
     ClassDB::add_property("LOD", PropertyInfo(Variant::NODE_PATH, "lod0_path"), "set_lod0_path", "get_lod0_path");
-    //register_property<LOD, NodePath>("lod1_path", &LOD::lod1_path, NodePath());
+
     ClassDB::bind_method(D_METHOD("get_lod1_path"), &LOD::get_lod1_path);
     ClassDB::bind_method(D_METHOD("set_lod1_path", "p_lod1_path"), &LOD::set_lod1_path);
     ClassDB::add_property("LOD", PropertyInfo(Variant::NODE_PATH, "lod1_path"), "set_lod1_path", "get_lod1_path");
-    //register_property<LOD, NodePath>("lod2_path", &LOD::lod2_path, NodePath());
+
     ClassDB::bind_method(D_METHOD("get_lod2_path"), &LOD::get_lod2_path);
     ClassDB::bind_method(D_METHOD("set_lod2_path", "p_lod2_path"), &LOD::set_lod2_path);
     ClassDB::add_property("LOD", PropertyInfo(Variant::NODE_PATH, "lod2_path"), "set_lod2_path", "get_lod2_path");
-    //register_property<LOD, NodePath>("lod3_path", &LOD::lod3_path, NodePath());
+
     ClassDB::bind_method(D_METHOD("get_lod3_path"), &LOD::get_lod3_path);
     ClassDB::bind_method(D_METHOD("set_lod3_path", "p_lod3_path"), &LOD::set_lod3_path);
     ClassDB::add_property("LOD", PropertyInfo(Variant::NODE_PATH, "lod3_path"), "set_lod3_path", "get_lod3_path");
 
     // Exposed methods
-    //register_method("_process", &LOD::_process);
-    //ClassDB::bind_method(D_METHOD("_process"), &LOD::_process);
-    //register_method("_ready", &LOD::_ready);
-    //ClassDB::bind_method(D_METHOD("_ready"), &LOD::_ready);
-    //register_method("_enter_tree", &LOD::_enter_tree);
-    //ClassDB::bind_method(D_METHOD("_enter_tree"), &LOD::_enter_tree);
-    //register_method("_exit_tree", &LOD::_exit_tree);
-    //ClassDB::bind_method(D_METHOD("_exit_tree"), &LOD::_exit_tree);
-
-    //register_method("update_lod_AABB", &LOD::update_lod_AABB);
     ClassDB::bind_method(D_METHOD("update_lod_AABB"), &LOD::update_lod_AABB);
-    //register_method("update_lod_multipliers_from_manager", &LOD::update_lod_multipliers_from_manager);
     ClassDB::bind_method(D_METHOD("update_lod_multipliers_from_manager"), &LOD::update_lod_multipliers_from_manager);
-    //register_method("get_current_lod", &LOD::get_current_lod);
     ClassDB::bind_method(D_METHOD("get_current_lod"), &LOD::get_current_lod);
 
     // Signals
-    //register_signal<LOD>("lod_changed", "lod", GODOT_VARIANT_TYPE_INT);
     ADD_SIGNAL(MethodInfo("lod_changed", PropertyInfo(Variant::INT, "new_lod")));
-    //register_signal<LOD>("freed");
     ADD_SIGNAL(MethodInfo("freed"));
     
 }
@@ -169,7 +147,7 @@ void LOD::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) {
         return;
     }
-    
+
     lod_component.setup(Object::cast_to<Node3D>(this));
     lod_component.lod_manager->debug_level_print(1, get_name() + String(": Initializing Mesh LOD."));
 

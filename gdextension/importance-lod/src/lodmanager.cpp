@@ -8,100 +8,82 @@
 #define DEBUG_PRINT_ACTIONS 1
 #define DEBUG_PRINT_ACTIONS_AND_NAMES 2
 
+// Somewhat hacky. Some low value below which we do not run the LOD thread to avoid overloading the CPU with more work during heavy workloads.
+#define MINIMUM_LOOP_FPS 7.0
+
 using namespace godot;
 
 void LODManager::_bind_methods() {
-    //register_property<LODManager, bool>("use_multithreading", &LODManager::use_multithreading, true);
     ClassDB::bind_method(D_METHOD("get_use_multithreading"), &LODManager::get_use_multithreading);
     ClassDB::bind_method(D_METHOD("set_use_multithreading", "p_use_multithreading"), &LODManager::set_use_multithreading);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::BOOL, "use_multithreading"), "set_use_multithreading", "get_use_multithreading");
-    //register_property<LODManager, int>("objectsPerFrame", &LODManager::objects_per_frame, 10000);
+
     ClassDB::bind_method(D_METHOD("get_objects_per_frame"), &LODManager::get_objects_per_frame);
     ClassDB::bind_method(D_METHOD("set_objects_per_frame", "p_objects_per_frame"), &LODManager::set_objects_per_frame);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::INT, "objects_per_frame"), "set_objects_per_frame", "get_objects_per_frame");
 
-    //register_property<LODManager, float>("fov", &LODManager::set_fov, &LODManager::get_fov, 70.f);
     ClassDB::bind_method(D_METHOD("get_fov"), &LODManager::get_fov);
     ClassDB::bind_method(D_METHOD("set_fov", "p_fov"), &LODManager::set_fov);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "fov"), "set_fov", "get_fov");
 
-    //register_property<LODManager, bool>("update_fov_every_loop", &LODManager::update_fov_every_loop, false);
     ClassDB::bind_method(D_METHOD("get_update_fov_every_loop"), &LODManager::get_update_fov_every_loop);
     ClassDB::bind_method(D_METHOD("set_update_fov_every_loop", "p_update_fov_every_loop"), &LODManager::set_update_fov_every_loop);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::BOOL, "update_fov_every_loop"), "set_update_fov_every_loop", "get_update_fov_every_loop");
-    //register_property<LODManager, bool>("update_AABB_every_loop", &LODManager::update_AABB_every_loop, false);
+
     ClassDB::bind_method(D_METHOD("get_update_AABB_every_loop"), &LODManager::get_update_AABB_every_loop);
     ClassDB::bind_method(D_METHOD("set_update_AABB_every_loop", "p_update_AABB_every_loop"), &LODManager::set_update_AABB_every_loop);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::BOOL, "update_AABB_every_loop"), "set_update_AABB_every_loop", "get_update_AABB_every_loop");
-    //register_property<LODManager, float>("tick_speed", &LODManager::tick_speed, 0.2f);
+
     ClassDB::bind_method(D_METHOD("get_tick_speed"), &LODManager::get_tick_speed);
     ClassDB::bind_method(D_METHOD("set_tick_speed", "p_tick_speed"), &LODManager::set_tick_speed);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "tick_speed"), "set_tick_speed", "get_tick_speed");
 
     // Multipliers, should be visible to other nodes so they may update.
-    //register_property<LODManager, bool>("update_multipliers_every_loop", &LODManager::update_multipliers_every_loop, false);
+    // However, if modifying directly, you must call update_lod_multipliers_in_objects to take effect in objects
     ClassDB::bind_method(D_METHOD("get_update_multipliers_every_loop"), &LODManager::get_update_multipliers_every_loop);
     ClassDB::bind_method(D_METHOD("set_update_multipliers_every_loop", "p_update_multipliers_every_loop"), &LODManager::set_update_multipliers_every_loop);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::BOOL, "update_multipliers_every_loop"), "set_update_multipliers_every_loop", "get_update_multipliers_every_loop");
-    // However, if modifying directly, you must call updateLodMultipliersInObjects to take effect in objects
-    //register_property<LODManager, float>("global_distance_multiplier", &LODManager::global_distance_multiplier, 1.0f);
+
     ClassDB::bind_method(D_METHOD("get_global_distance_multiplier"), &LODManager::get_global_distance_multiplier);
     ClassDB::bind_method(D_METHOD("set_global_distance_multiplier", "p_global_distance_multiplier"), &LODManager::set_global_distance_multiplier);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "global_distance_multiplier"), "set_global_distance_multiplier", "get_global_distance_multiplier");
-    //register_property<LODManager, float>("lod1_distance_multiplier", &LODManager::lod1_distance_multiplier, 1.0f);
+
     ClassDB::bind_method(D_METHOD("get_lod1_distance_multiplier"), &LODManager::get_lod1_distance_multiplier);
     ClassDB::bind_method(D_METHOD("set_lod1_distance_multiplier", "p_lod1_distance_multiplier"), &LODManager::set_lod1_distance_multiplier);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "lod1_distance_multiplier"), "set_lod1_distance_multiplier", "get_lod1_distance_multiplier");
-    //register_property<LODManager, float>("lod2_distance_multiplier", &LODManager::lod2_distance_multiplier, 1.0f);
+
     ClassDB::bind_method(D_METHOD("get_lod2_distance_multiplier"), &LODManager::get_lod2_distance_multiplier);
     ClassDB::bind_method(D_METHOD("set_lod2_distance_multiplier", "p_lod2_distance_multiplier"), &LODManager::set_lod2_distance_multiplier);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "lod2_distance_multiplier"), "set_lod2_distance_multiplier", "get_lod2_distance_multiplier");
-    //register_property<LODManager, float>("lod3_distance_multiplier", &LODManager::lod3_distance_multiplier, 1.0f);
+
     ClassDB::bind_method(D_METHOD("get_lod3_distance_multiplier"), &LODManager::get_lod3_distance_multiplier);
     ClassDB::bind_method(D_METHOD("set_lod3_distance_multiplier", "p_lod3_distance_multiplier"), &LODManager::set_lod3_distance_multiplier);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "lod3_distance_multiplier"), "set_lod3_distance_multiplier", "get_lod3_distance_multiplier");
-    //register_property<LODManager, float>("hide_distance_multiplier", &LODManager::hide_distance_multiplier, 1.0f);
+
     ClassDB::bind_method(D_METHOD("get_hide_distance_multiplier"), &LODManager::get_hide_distance_multiplier);
     ClassDB::bind_method(D_METHOD("set_hide_distance_multiplier", "p_hide_distance_multiplier"), &LODManager::set_hide_distance_multiplier);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "hide_distance_multiplier"), "set_hide_distance_multiplier", "get_hide_distance_multiplier");
-    //register_property<LODManager, float>("unload_distance_multiplier", &LODManager::unload_distance_multiplier, 1.0f);
+
     ClassDB::bind_method(D_METHOD("get_unload_distance_multiplier"), &LODManager::get_use_multithreading);
     ClassDB::bind_method(D_METHOD("set_unload_distance_multiplier", "p_unload_distance_multiplier"), &LODManager::set_unload_distance_multiplier);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::FLOAT, "unload_distance_multiplier"), "set_unload_distance_multiplier", "get_unload_distance_multiplier");
 
     // 0 = off, 1 = print the steps in each thread loop, 2 = print the object names as we go through them.
-    //register_property<LODManager, int>("debug_level", &LODManager::debug_level, 0, GODOT_METHOD_RPC_MODE_DISABLED, 
-    //    GODOT_PROPERTY_USAGE_DEFAULT, GODOT_PROPERTY_HINT_ENUM, "Off,Print thread actions,Print thread actions and object names");
     ClassDB::bind_method(D_METHOD("get_debug_level"), &LODManager::get_debug_level);
     ClassDB::bind_method(D_METHOD("set_debug_level", "p_debug_level"), &LODManager::set_debug_level);
     ClassDB::add_property("LODManager", PropertyInfo(Variant::INT, "debug_level", PROPERTY_HINT_ENUM, "Off,Print thread actions,Print thread actions and object names"), 
         "set_debug_level", "get_debug_level");
 
     // Exposed methods
-    //register_method("stop_loop", &LODManager::stop_loop);
     ClassDB::bind_method(D_METHOD("stop_loop"), &LODManager::stop_loop);
-    //register_method("update_lod_multipliers_from_settings", &LODManager::update_lod_multipliers_from_settings);
     ClassDB::bind_method(D_METHOD("update_lod_multipliers_from_settings"), &LODManager::update_lod_multipliers_from_settings);
-    //register_method("update_lod_multipliers_in_objects", &LODManager::update_lod_multipliers_in_objects);
     ClassDB::bind_method(D_METHOD("update_lod_multipliers_in_objects"), &LODManager::update_lod_multipliers_in_objects);
-    //register_method("update_lod_AABBs", &LODManager::update_lod_AABBs);
     ClassDB::bind_method(D_METHOD("update_lod_AABBs"), &LODManager::update_lod_AABBs);
-    //register_method("update_fov", &LODManager::update_fov);
     ClassDB::bind_method(D_METHOD("update_fov"), &LODManager::update_fov);
-    //register_method("set_up_camera", &LODManager::set_up_camera);
     ClassDB::bind_method(D_METHOD("set_up_camera"), &LODManager::set_up_camera);
-    //register_method("set_camera", &LODManager::set_camera);
     ClassDB::bind_method(D_METHOD("set_camera", "p_camera"), &LODManager::set_camera);
 
-    //register_method("_ready", &LODManager::_ready);
-    //register_method("_process", &LODManager::_process);
-    //register_method("_exit_tree", &LODManager::_exit_tree);
-    //ClassDB::bind_method(D_METHOD("_ready"), &LODManager::_ready);
-    //ClassDB::bind_method(D_METHOD("_process"), &LODManager::_process);
-    //ClassDB::bind_method(D_METHOD("_exit_tree"), &LODManager::_exit_tree);
-
     // Thread function
-    //register_method("main_loop", &LODManager::main_loop);
     ClassDB::bind_method(D_METHOD("main_loop"), &LODManager::main_loop);
 }
 
@@ -141,7 +123,6 @@ void LODManager::_ready() {
     if (use_multithreading) {
         debug_level_print(DEBUG_PRINT_ACTIONS, "LODManager: Creating the Semaphore for the LOD thread.");
         // Do it before the update LOD mults and FOV call because it's used there
-        //lod_objects_semaphore = (Ref<Semaphore>) Semaphore::_new();
         lod_objects_semaphore = Ref<Semaphore>(new Semaphore());
         lod_objects_semaphore->post();
     }
@@ -161,7 +142,6 @@ void LODManager::_ready() {
         debug_level_print(DEBUG_PRINT_ACTIONS, "Starting the LOD thread.");
         lod_loop_thread = Ref<Thread>(new Thread());
         Callable main_loop_callable = Callable(this, "main_loop").bind();
-        //main_loop_callable.bind(this, "main_loop");
         lod_loop_thread->start(main_loop_callable);
     }
 }
@@ -186,7 +166,7 @@ void LODManager::lod_function() {
     // A bit hacky, but we'll check if the main thread is frozen/doing something heavy.
     // We don't need LOD when nothing is really moving nor do we want to potentially overload
     // the main thread with deferred calls.
-    if (current_fps < 7.0f) {
+    if (current_fps < MINIMUM_LOOP_FPS) {
         return;
     }
     // Could use OS.delay_msec, but loop may take a long time so keep track of time manually instead
@@ -253,8 +233,8 @@ void LODManager::lod_function() {
                 continue;
             }
 
-            LODBaseComponent* lbc = lod_objects[j];
-            Node3D* obj = lbc->get_object();
+            LODBaseComponent* lod_object = lod_objects[j];
+            Node3D* obj = lod_object->get_object();
 
             if (!obj->is_inside_tree()) {
                 ERR_PRINT(obj->get_name() + String(": LOD Object is not in the scene tree"));
@@ -266,18 +246,18 @@ void LODManager::lod_function() {
             // Update multiplier if needed. It will fetch the distances from our public values
             if (update_multipliers_flag) {
                 debug_level_print(DEBUG_PRINT_ACTIONS_AND_NAMES, "LODManager: Telling the LOD object to update its multipliers in the LOD thread.");
-                lbc->update_lod_multipliers_from_manager();
+                lod_object->update_lod_multipliers_from_manager();
             }
 
             // Update AABB if needed
-            if (update_AABBs_flag && lbc->use_screen_percentage) {
+            if (update_AABBs_flag && lod_object->use_screen_percentage) {
                 debug_level_print(DEBUG_PRINT_ACTIONS_AND_NAMES, "LODManager: Telling this LOD object to update its AABBs.");
-                lbc->update_lod_AABB();
+                lod_object->update_lod_AABB();
             }
 
             // Pass camera location and do calculations on LOD object
             debug_level_print(DEBUG_PRINT_ACTIONS_AND_NAMES, "LODManager: Calling the process_data function with the camera found.");
-            lbc->process_data(camera_location);
+            lod_object->process_data(camera_location);
         }
         if (manager_removed) {
             break;
@@ -336,20 +316,20 @@ void LODManager::stop_loop() {
     //delete lod_objects_semaphore;
 }
 
-bool LODManager::add_object(LODBaseComponent* lbc) {
+bool LODManager::add_object(LODBaseComponent* lod_object) {
     // Go through array list to find one that has space
     ERR_FAIL_COND_V_MSG(!lod_objects_semaphore.is_valid(), false, String("LODManager: LOD Objects Semaphore was somehow not initialized when trying to add a LOD object. Skipping."));
     if (use_multithreading) {
         lod_objects_semaphore->wait();
     }
 
-    debug_level_print(DEBUG_PRINT_ACTIONS, lbc->get_object()->get_name() + String(": Adding a new object to the LOD Manager's list"));
+    debug_level_print(DEBUG_PRINT_ACTIONS, lod_object->get_object()->get_name() + String(": Adding a new object to the LOD Manager's list"));
 
     bool added = false; // Keep track in case we need to add a new list
     for (int i = 0; i < lod_object_arrays.size(); i++) {
         std::vector<LODBaseComponent*>& lod_objects = lod_object_arrays[i];
         if (lod_objects.size() < MAX_ARRAY_SIZE) {
-            lod_objects.push_back(lbc);
+            lod_objects.push_back(lod_object);
             lod_object_count++;
             added = true;
             break;
@@ -357,9 +337,9 @@ bool LODManager::add_object(LODBaseComponent* lbc) {
     }
 
     if (!added) {
-        std::vector<LODBaseComponent*> newLODObjectArray;
-        newLODObjectArray.push_back(lbc);
-        lod_object_arrays.push_back(newLODObjectArray);
+        std::vector<LODBaseComponent*> new_lod_objects_vector;
+        new_lod_objects_vector.push_back(lod_object);
+        lod_object_arrays.push_back(new_lod_objects_vector);
         lod_object_count++;
     }
 
@@ -370,7 +350,7 @@ bool LODManager::add_object(LODBaseComponent* lbc) {
     return true;
 }
 
-void LODManager::remove_object(LODBaseComponent* lbc) {
+void LODManager::remove_object(LODBaseComponent* lod_object) {
     // If we're closing/have closed the LOD manager, don't bother doing expensive finds and removes.
     // It might take a while and is unnecessary.
     if (manager_removed) {
@@ -378,7 +358,7 @@ void LODManager::remove_object(LODBaseComponent* lbc) {
         return;
     }
 
-    debug_level_print(DEBUG_PRINT_ACTIONS, lbc->get_object()->get_name() + String(": Removing an object from the LOD Manager's list"));
+    debug_level_print(DEBUG_PRINT_ACTIONS, lod_object->get_object()->get_name() + String(": Removing an object from the LOD Manager's list"));
     if (use_multithreading) {
         lod_objects_semaphore->wait();
     }
@@ -387,14 +367,14 @@ void LODManager::remove_object(LODBaseComponent* lbc) {
     bool done = false;
     for (int i = 0; i < lod_object_arrays.size(); i++) {
         std::vector<LODBaseComponent*>& lod_objects = lod_object_arrays[i];
-        for (std::vector<LODBaseComponent*>::iterator it = lod_objects.begin(); it != lod_objects.end(); ) {
-            if (*it == lbc) {
-                it = lod_objects.erase(it);
+        for (std::vector<LODBaseComponent*>::iterator lod_iterator = lod_objects.begin(); lod_iterator != lod_objects.end(); ) {
+            if (*lod_iterator == lod_object) {
+                lod_iterator = lod_objects.erase(lod_iterator);
                 lod_object_count--;
                 done = true;
                 break;
             } else {
-                ++it;
+                ++lod_iterator;
             }
         }
         if (done) {
