@@ -1,4 +1,9 @@
-.import/
+.godot/
+*.exp
+*.lib
+*.pdb
+*.idb
+*.tmp
 
 # Ignore C++ build files
 .sconsign.dblite

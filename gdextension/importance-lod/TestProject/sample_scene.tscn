@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bpjeslbqn2yly"]
+
+[node name="SampleScene" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+
+[node name="LOD" type="LOD" parent="."]
+
+[node name="LOD0" type="Node3D" parent="LOD"]

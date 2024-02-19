@@ -1,0 +1,4 @@
+[submodule "gdextension/importance-lod/godot-cpp"]
+	path = gdextension/importance-lod/godot-cpp
+	url = https://github.com/godotengine/godot-cpp
+	branch = 4.2
