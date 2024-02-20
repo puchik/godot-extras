@@ -1,4 +1,3 @@
 [gd_scene format=3 uid="uid://duiut6wqq7qmj"]
 
 [node name="LODManager" type="LODManager"]
-debug_level = 2

@@ -120,6 +120,8 @@ void LOD::_enter_tree() {
         return;
     }
 
+    cached_scale = get_scale();
+
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
     if (!lod_component.registered && lod_component.ready_finished) {
         lod_component.unregister();
@@ -263,7 +265,7 @@ void LOD::process_data(Vector3 camera_location) {
 
     if ((actual_unload_distance > 0.0f) &&
         (distance > actual_unload_distance)) {
-      emit_signal("freed");
+      call_deferred("emit_signal", "freed");
       queue_free();
     } else if ((actual_hide_distance > 0.0f) && (distance > actual_hide_distance)) {
       show_lod(LOD_COUNT); // >= LOD_COUNT results in all LODs hidden
@@ -286,7 +288,7 @@ void LOD::update_lod_AABB() {
     // So make an AABB for the objects manually.
     
     // Check for at least LOD0
-    ERR_FAIL_NULL_MSG(lods[0], String(get_name()) + ": Does not have a valid LOD0, required for screen percentage.");
+    ERR_FAIL_NULL_MSG(lods[0], String(get_name()) + ": Does not have a valid LOD0. One is required when using screen percentage.");
 
     // Try casting the LOD objects to VisualInstance3D (that's the only way we can get an AABB!)
     VisualInstance3D *lod0_visual_instance = Object::cast_to<VisualInstance3D>(lods[0]);
@@ -317,11 +319,14 @@ void LOD::update_lod_AABB() {
     }
 
     // Get the offset of the parent position and the overall AABB
-    transform_offset_AABB = get_global_transform().origin - (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f));
+
+    Vector3 object_scale = cached_scale;
+    transform_offset_AABB = (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f) * object_scale);
 
     if (lod_component.use_screen_percentage) {
         // Get the longest axis (conservative estimate of the object size vs screen)
-        float longest_axis = object_AABB.get_longest_axis_size();
+        int longest_axis_index = object_AABB.get_longest_axis_index();
+        float longest_axis = object_AABB.get_longest_axis_size() * object_scale[longest_axis_index];
 
         // Use an isosceles triangle to get a worst-case estimate of the distances
         // Don't forget the degrees to radians conversion
@@ -362,7 +367,7 @@ void LOD::show_lod(int lod) {
     }
 
     current_lod = lod;
-    emit_signal("lod_changed", lod);
+    call_deferred("emit_signal", "lod_changed", lod);
 
     // If lod requested doesn't exist, show last active lod until actual_hide_distance
     if (((lod < LOD_COUNT) && !lods[lod])) {
@@ -373,21 +378,26 @@ void LOD::show_lod(int lod) {
     for(int i = last_lod; i >= 0 ; i--) {
         if (lods[i] && lods[i]->is_inside_tree()) {
             if (i == lod) {
-                lods[i]->show();
+                lods[i]->call_thread_safe("show");
 
                 // If shadow casting enabled
                 if (lods[max_shadow_caster] && max_shadow_caster > 0) {
                     // If lower LOD, turn on shadow caster, otherwise reset it
                     if (i < max_shadow_caster) {
                         lods[max_shadow_caster]->set("cast_shadow", GeometryInstance3D::SHADOW_CASTING_SETTING_SHADOWS_ONLY);
-                        lods[max_shadow_caster]->show();
+                        lods[max_shadow_caster]->call_thread_safe("show");
                     } else {
                         lods[max_shadow_caster]->set("cast_shadow", GeometryInstance3D::SHADOW_CASTING_SETTING_ON);
                     }
                 }
-            } else if (lods[i]->is_visible()) {
-                lods[i]->hide();
+            //} else if (lods[i]->call_thread_safe("is_visible")) {
+            // You would normally check if the LOD is actually visible before telling it to hide, 
+            // but Godot wants is_visible code to run deferred, which seems to break its functionality.
+            // Trying to hide something that is already hidden is unnecessary, but will not actually do anything bad.
+            // TODO: (?) Find a better "solution". Leave this until until then/Godot supports this.
+            } else {
+                lods[i]->call_thread_safe("hide");
             }
         }
-    }
+    }   
 }

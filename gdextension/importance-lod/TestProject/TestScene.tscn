@@ -162,14 +162,6 @@ layout_mode = 0
 offset_left = 100.0
 text = "70"
 
-[node name="GIProbeNote" type="Label" parent="Controls"]
-offset_left = 7.0
-offset_top = 100.0
-offset_right = 217.0
-offset_bottom = 165.0
-pivot_offset = Vector2(85.1975, 7)
-text = "VoxelGI LOD only makes sense if you have the ambient light blending patch or you have no ambient light"
-
 [node name="Scene" type="Node3D" parent="."]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Scene"]
@@ -201,28 +193,34 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.47256, 0, 4.54922)
 [node name="Cube" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
 
 [node name="Cube2" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(4.61867, 0, 0, 0, 4.61867, 0, 0, 0, 4.61867, 0, 0, -19.3774)
 
 [node name="Cube3" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 11.9911)
 
 [node name="Cube4" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7828, 0, 0)
 
 [node name="Cube5" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.13745, 0, 11.7014)
 
 [node name="Cube6" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.66411, 0, -14.0952)
 
 [node name="Cube7" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.458, 0, 0)
 
 [node name="Cube8" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.87449, 0, 9.43333)
 
 [node name="Cube9" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.97763, 0, -12.8135)
 
 [node name="Cube10" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.19053, 0, 0)
 
 [node name="Cube11" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
-
-[node name="DisabledCube12" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
-
-[node name="DisabledCube13" parent="Demo1_Simple1/Cubes" instance=ExtResource("5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 17.3634)
 
 [node name="Demo3_MMI" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.88913, 0, 1.00959)
@@ -354,11 +352,6 @@ libraries = {
 "": SubResource("AnimationLibrary_tt030")
 }
 autoplay = "BlinkingLights"
-
-[node name="LOD" type="LOD" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12.2364)
-
-[node name="LODManager" type="LODManager" parent="."]
 
 [connection signal="text_submitted" from="Controls/GlobalLODText/LineEdit" to="Controls" method="_on_LodMultiplier_text_entered"]
 [connection signal="text_submitted" from="Controls/Camera3D FOV/LineEdit" to="Controls" method="_on_fov_text_entered"]

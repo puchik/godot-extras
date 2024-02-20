@@ -309,11 +309,12 @@ void LODManager::stop_loop() {
         manager_removed = true;
     }
 
-    if (lod_loop_thread->is_alive()) {
+    if (lod_loop_thread.is_valid() && lod_loop_thread->is_started()) {
         lod_loop_thread->wait_to_finish();
+        // Godot will clean up the objects once they have no references.
+        lod_loop_thread.unref();
+        lod_objects_semaphore.unref();
     }
-
-    //delete lod_objects_semaphore;
 }
 
 bool LODManager::add_object(LODBaseComponent* lod_object) {

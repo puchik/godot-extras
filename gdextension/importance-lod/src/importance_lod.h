@@ -251,7 +251,7 @@ public:
 class LOD : public VisualInstance3D {
     GDCLASS(LOD, VisualInstance3D)
 
-private:
+protected:
     LODComponent<LOD> lod_component;
 
     // Distance by metres
@@ -301,7 +301,8 @@ private:
     float hide_distance_multiplier = 1.0f;
     float unload_distance_multiplier = 1.0f;
 
-protected:
+    Vector3 cached_scale;
+
     static void _bind_methods();
 
 public:
