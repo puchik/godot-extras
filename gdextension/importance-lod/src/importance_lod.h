@@ -2,14 +2,11 @@
 #define IMPORTANCE_LOD_H
 
 #include "godot_cpp/core/class_db.hpp"
-
 #include <godot_cpp/godot.hpp>
 
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
-//#include <AABB.hpp>
 #include <godot_cpp/classes/thread.hpp>
-//#include <Ref.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
@@ -18,23 +15,15 @@
 
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
-//#include <Transform.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
-//#include <Vector3.hpp>
 
 #include <ctime>
 #include <vector>
 
 // Objects
-
-//#include <NodePath.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/visual_instance3d.hpp>
-
-// MultiMesh
-#include <godot_cpp/classes/multi_mesh_instance3d.hpp>
-#include <godot_cpp/classes/multi_mesh.hpp>
 
 // Doesn't currently support more than 4 LODs for meshes due to other hardcoded variables.
 #define LOD_COUNT 4
@@ -321,64 +310,6 @@ public:
     void set_lod3_path(const NodePath p_lod3_path) { lod3_path = p_lod3_path; };
     NodePath get_lod3_path() const { return lod3_path; };
 };
-
-/*
-
-//// MultiMeshInstance LOD -------------------------------------------------------------------
-class MultiMeshLOD : public MultiMeshInstance {
-    GDCLASS(MultiMeshLOD, MultiMeshInstance)
-
-private:
-    LODObject<MultiMeshLOD> lod_component;
-
-    float min_distance = 5.0f; // At this distance, or below, we see max number of multimesh count
-    float max_distance = 80.0f; // At this distance, or above, we see min (or none) number of multimesh count
-
-    // Distance by screen percentage
-    // Use a conservative/worst-case method for getting the size of the object
-    // relative to the screen (largest AABB axis on both viewport axes)
-    float min_ratio = 2.0f;
-    float max_ratio = 5.0f;
-
-    int64_t min_count = 0;
-    int64_t max_count = -1; // -1 means the number generated in the multimesh we find
-
-    int64_t target_count = 50;
-
-    float fade_speed = 1.0f;
-    float fade_exponent = 1.0f;  // Exponent of the [0, 1] curve that reduces count. At 1, we fade linearly.
-
-    float global_distance_multiplier = 1.0f;
-
-    MultiMesh* multimesh;
-
-public:
-    static void _register_methods();
-
-    MultiMeshLOD();
-    ~MultiMeshLOD();
-
-    void _init(); // our initializer called by Godot
-
-    void _ready();
-    void _enter_tree();
-    void _process(float delta);
-    void _exit_tree();
-    void process_data(Vector3 camera_location);
-
-    void update_lod_multipliers_from_manager(); // Reading project settings is pretty expensive... only update manually
-    void update_lod_AABB(); // Update AABB only if necessary
-
-    inline void set_enabled(bool value) { lod_component.enabled = value; }
-    inline bool get_enabled() { return lod_component.enabled; }
-
-    inline void set_affected_by_distance(bool value) { lod_component.affected_by_distance_multipliers = value; }
-    inline bool get_affected_by_distance() { return lod_component.affected_by_distance_multipliers; }
-
-    inline void set_use_screen_percentage(bool value) { lod_component.use_screen_percentage = value; }
-    inline bool get_use_screen_percentage() { return lod_component.use_screen_percentage; }
-};
-*/
 
 }
 
