@@ -14,8 +14,7 @@ void initialize_importance_lod_module (ModuleInitializationLevel p_level) {
     }
 
     ClassDB::register_class<LODManager>();
-    ClassDB::register_class<LODBaseComponent>();
-    ClassDB::register_class<LOD>();
+    ClassDB::register_class<LODObject>();
 }
 
 void uninitialize_importance_lod_module (ModuleInitializationLevel p_level) {

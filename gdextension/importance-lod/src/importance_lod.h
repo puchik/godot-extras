@@ -3,10 +3,7 @@
 
 #include "godot_cpp/core/class_db.hpp"
 
-
-
 #include <godot_cpp/godot.hpp>
-
 
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
@@ -52,7 +49,7 @@
 
 namespace godot {
 
-class LODBaseComponent;
+class LODObject;
 
 //// Manager of all LOD objects ----------------------------------------------------------------------------------
 class LODManager : public Node {
@@ -62,7 +59,7 @@ private:
     float tick_speed = 0.2f;
 
     // Array of arrays of LOD objects
-    std::vector<std::vector<LODBaseComponent*>> lod_object_arrays;
+    std::vector<std::vector<LODObject*>> lod_object_arrays;
 
     Camera3D* camera = nullptr;
     float fov = 70.0f; // Need FOV for getting screen percentages
@@ -111,8 +108,8 @@ public:
     void _exit_tree();
 
     // Returns false if operation failed.
-    bool add_object(LODBaseComponent* lbc);
-    void remove_object(LODBaseComponent* lbc);
+    bool add_object(LODObject* lbc);
+    void remove_object(LODObject* lbc);
     
     // Reading project settings is pretty expensive... set up to only update manually by default
     // but we have the option to update every loop, too
@@ -185,74 +182,17 @@ public:
 };
 
 //// Base parent for LOD types.
-class LODBaseComponent : public Object {
-    GDCLASS(LODBaseComponent, Object)
+class LODObject : public VisualInstance3D {
+    GDCLASS(LODObject, VisualInstance3D)
 
 protected:
-    Node3D* lod_object; // Object that owns us
-    static void _bind_methods() { } ;
 
-public:
+    static void _bind_methods();
+
     LODManager* lod_manager;
     bool enabled = true; // Switch to false if we want to turn off LOD functionality
     bool registered = false; // Whether the manager knows we exist
     bool ready_finished = false;
-
-    // Distance by screen percentage
-    // Use a conservative/worst-case method for getting the size of the object
-    // relative to the screen (largest AABB axis on both viewport axes)
-    bool use_screen_percentage = true;
-    bool affected_by_distance_multipliers = true;
-
-    void _init() {}
-    LODBaseComponent() {}
-    ~LODBaseComponent() {}
-
-    void setup(Node3D* p_object);
-    inline Node3D* get_object() { return lod_object; }
-
-    inline float get_fov();
-    float get_tan_theta();
-
-    virtual void process_data(Vector3 p_camera_location) {}
-    virtual void update_lod_AABB() {}
-    virtual void update_lod_multipliers_from_manager() {}
-
-    void try_register();  // Register is a C++ keyword, so try_
-    void unregister();
-    
-    /// Basic (mandatory) setters and getters
-    /*
-    void set_enabled(bool input) { enabled = input; };
-    bool get_enabled() { return enabled; };
-    void set_use_screen_percentage(bool input) { use_screen_percentage = input; };
-    bool get_use_screen_percentage() { return use_screen_percentage; };
-    */
-    void set_affected_by_distance_multipliers(bool p_affected_by_distance_multipliers) { affected_by_distance_multipliers = p_affected_by_distance_multipliers; };
-    bool get_affected_by_distance_multipliers() { return affected_by_distance_multipliers; };
-};
-
-template <class T>
-class LODComponent : public LODBaseComponent {
-    GDCLASS(LODComponent, LODBaseComponent)
-public:
-    void process_data(Vector3 p_camera_location) override {
-        Object::cast_to<T>(lod_object)->process_data(p_camera_location);
-    }
-    void update_lod_AABB() override {
-        Object::cast_to<T>(lod_object)->update_lod_AABB();
-    }
-    void update_lod_multipliers_from_manager()override {
-        Object::cast_to<T>(lod_object)->update_lod_multipliers_from_manager();
-    }
-};
-
-//// Object based LOD ----------------------------------------------------------------------------------
-class LOD : public VisualInstance3D {
-    GDCLASS(LOD, VisualInstance3D)
-
-protected:
-    LODComponent<LOD> lod_component;
 
     // Distance by metres
     // These will be set by the ratios below if use_screen_percentage is true
@@ -303,15 +243,30 @@ protected:
 
     Vector3 cached_scale;
 
-    static void _bind_methods();
-
 public:
+
+    // Distance by screen percentage
+    // Use a conservative/worst-case method for getting the size of the object
+    // relative to the screen (largest AABB axis on both viewport axes)
+    bool use_screen_percentage = true;
+    bool affected_by_distance_multipliers = true;
+
+    void _init();
+    LODObject();
+    ~LODObject();
+
+    void setup();
+
+    inline float get_fov();
+    float get_tan_theta();
+
+    void try_register();  // Register is a C++ keyword, so try_
+    void unregister();
+
+    void set_affected_by_distance_multipliers(bool p_affected_by_distance_multipliers) { affected_by_distance_multipliers = p_affected_by_distance_multipliers; };
+    bool get_affected_by_distance_multipliers() { return affected_by_distance_multipliers; };
+
     static void _register_methods();
-
-    LOD();
-    ~LOD();
-
-    void _init(); // our initializer called by Godot
 
     void _ready();
     void _enter_tree();
@@ -325,14 +280,14 @@ public:
 
     inline int get_current_lod() const { return current_lod; }
 
-    inline void set_enabled(const bool p_enabled) { lod_component.enabled = p_enabled; }
-    inline bool get_enabled() const { return lod_component.enabled; }
+    inline void set_enabled(const bool p_enabled) { enabled = p_enabled; }
+    inline bool get_enabled() const { return enabled; }
 
-    inline void set_affected_by_distance(const bool p_affected_by_distance_multipliers) { lod_component.affected_by_distance_multipliers = p_affected_by_distance_multipliers; }
-    inline bool get_affected_by_distance() const { return lod_component.affected_by_distance_multipliers; }
+    inline void set_affected_by_distance(const bool p_affected_by_distance_multipliers) { affected_by_distance_multipliers = p_affected_by_distance_multipliers; }
+    inline bool get_affected_by_distance() const { return affected_by_distance_multipliers; }
 
-    inline void set_use_screen_percentage(const bool p_use_screen_percentage) { lod_component.use_screen_percentage = p_use_screen_percentage; }
-    inline bool get_use_screen_percentage() const { return lod_component.use_screen_percentage; }
+    inline void set_use_screen_percentage(const bool p_use_screen_percentage) { use_screen_percentage = p_use_screen_percentage; }
+    inline bool get_use_screen_percentage() const { return use_screen_percentage; }
 
     /// Basic (mandatory) setters and getters
     void set_lod1_distance(const float p_lod1_distance) { lod1_distance = p_lod1_distance; };
@@ -374,7 +329,7 @@ class MultiMeshLOD : public MultiMeshInstance {
     GDCLASS(MultiMeshLOD, MultiMeshInstance)
 
 private:
-    LODComponent<MultiMeshLOD> lod_component;
+    LODObject<MultiMeshLOD> lod_component;
 
     float min_distance = 5.0f; // At this distance, or below, we see max number of multimesh count
     float max_distance = 80.0f; // At this distance, or above, we see min (or none) number of multimesh count

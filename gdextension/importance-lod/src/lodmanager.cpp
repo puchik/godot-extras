@@ -209,7 +209,7 @@ void LODManager::lod_function() {
         }
 
         //Array lod_objects = lod_object_arrays[i];
-        std::vector<LODBaseComponent*> lod_objects = lod_object_arrays[i];
+        std::vector<LODObject*> lod_objects = lod_object_arrays[i];
         debug_level_print(DEBUG_PRINT_ACTIONS, String("LODManager: Processing list of LOD Objects, size: ") + String::num_int64(lod_object_count));
         for (int j = 0; j < lod_objects.size(); j++) {
             if (!use_multithreading && (j == 0)) {
@@ -233,15 +233,14 @@ void LODManager::lod_function() {
                 continue;
             }
 
-            LODBaseComponent* lod_object = lod_objects[j];
-            Node3D* obj = lod_object->get_object();
+            LODObject* lod_object = lod_objects[j];
 
-            if (!obj->is_inside_tree()) {
-                ERR_PRINT(obj->get_name() + String(": LOD Object is not in the scene tree"));
+            if (!lod_object->is_inside_tree()) {
+                ERR_PRINT(lod_object->get_name() + String(": LOD Object is not in the scene tree"));
                 continue;
             }
 
-            debug_level_print(DEBUG_PRINT_ACTIONS_AND_NAMES, String("LODManager: ") + obj->get_name() + ": LOD object is valid.");
+            debug_level_print(DEBUG_PRINT_ACTIONS_AND_NAMES, String("LODManager: ") + lod_object->get_name() + ": LOD object is valid.");
 
             // Update multiplier if needed. It will fetch the distances from our public values
             if (update_multipliers_flag) {
@@ -258,11 +257,15 @@ void LODManager::lod_function() {
             // Pass camera location and do calculations on LOD object
             debug_level_print(DEBUG_PRINT_ACTIONS_AND_NAMES, "LODManager: Calling the process_data function with the camera found.");
             lod_object->process_data(camera_location);
+            
+            //lod_object->call_deferred("process_data", camera_location);
         }
+
         if (manager_removed) {
             break;
         }
     }
+    
     if (use_multithreading) {
         lod_objects_semaphore->post();
     }
@@ -317,18 +320,18 @@ void LODManager::stop_loop() {
     }
 }
 
-bool LODManager::add_object(LODBaseComponent* lod_object) {
+bool LODManager::add_object(LODObject* lod_object) {
     // Go through array list to find one that has space
-    ERR_FAIL_COND_V_MSG(!lod_objects_semaphore.is_valid(), false, String("LODManager: LOD Objects Semaphore was somehow not initialized when trying to add a LOD object. Skipping."));
     if (use_multithreading) {
+        ERR_FAIL_COND_V_MSG(!lod_objects_semaphore.is_valid(), false, String("LODManager: LOD Objects Semaphore was somehow not initialized when trying to add a LOD object. Skipping."));
         lod_objects_semaphore->wait();
     }
 
-    debug_level_print(DEBUG_PRINT_ACTIONS, lod_object->get_object()->get_name() + String(": Adding a new object to the LOD Manager's list"));
+    debug_level_print(DEBUG_PRINT_ACTIONS, lod_object->get_name() + String(": Adding a new object to the LOD Manager's list"));
 
     bool added = false; // Keep track in case we need to add a new list
     for (int i = 0; i < lod_object_arrays.size(); i++) {
-        std::vector<LODBaseComponent*>& lod_objects = lod_object_arrays[i];
+        std::vector<LODObject*>& lod_objects = lod_object_arrays[i];
         if (lod_objects.size() < MAX_ARRAY_SIZE) {
             lod_objects.push_back(lod_object);
             lod_object_count++;
@@ -338,7 +341,7 @@ bool LODManager::add_object(LODBaseComponent* lod_object) {
     }
 
     if (!added) {
-        std::vector<LODBaseComponent*> new_lod_objects_vector;
+        std::vector<LODObject*> new_lod_objects_vector;
         new_lod_objects_vector.push_back(lod_object);
         lod_object_arrays.push_back(new_lod_objects_vector);
         lod_object_count++;
@@ -351,7 +354,7 @@ bool LODManager::add_object(LODBaseComponent* lod_object) {
     return true;
 }
 
-void LODManager::remove_object(LODBaseComponent* lod_object) {
+void LODManager::remove_object(LODObject* lod_object) {
     // If we're closing/have closed the LOD manager, don't bother doing expensive finds and removes.
     // It might take a while and is unnecessary.
     if (manager_removed) {
@@ -359,7 +362,7 @@ void LODManager::remove_object(LODBaseComponent* lod_object) {
         return;
     }
 
-    debug_level_print(DEBUG_PRINT_ACTIONS, lod_object->get_object()->get_name() + String(": Removing an object from the LOD Manager's list"));
+    debug_level_print(DEBUG_PRINT_ACTIONS, lod_object->get_name() + String(": Removing an object from the LOD Manager's list"));
     if (use_multithreading) {
         lod_objects_semaphore->wait();
     }
@@ -367,8 +370,8 @@ void LODManager::remove_object(LODBaseComponent* lod_object) {
     // Find which array has this object
     bool done = false;
     for (int i = 0; i < lod_object_arrays.size(); i++) {
-        std::vector<LODBaseComponent*>& lod_objects = lod_object_arrays[i];
-        for (std::vector<LODBaseComponent*>::iterator lod_iterator = lod_objects.begin(); lod_iterator != lod_objects.end(); ) {
+        std::vector<LODObject*>& lod_objects = lod_object_arrays[i];
+        for (std::vector<LODObject*>::iterator lod_iterator = lod_objects.begin(); lod_iterator != lod_objects.end(); ) {
             if (*lod_iterator == lod_object) {
                 lod_iterator = lod_objects.erase(lod_iterator);
                 lod_object_count--;
