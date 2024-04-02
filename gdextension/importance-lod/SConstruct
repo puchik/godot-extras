@@ -18,14 +18,14 @@ sources = Glob("src/*.cpp")
 
 if env["platform"] == "macos":
     library = env.SharedLibrary(
-        "addons/importance-lod/bin/importance-lod.{}.{}.framework/importance-lod.{}.{}".format(
+        "addons/importance_lod/bin/importance-lod.{}.{}.framework/importance-lod.{}.{}".format(
             env["platform"], env["target"], env["platform"], env["target"]
         ),
         source=sources,
     )
 else:
     library = env.SharedLibrary(
-        "addons/importance-lod/bin/importance-lod{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        "addons/importance_lod/bin/importance-lod{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
     )
 
