@@ -1,6 +1,6 @@
 @tool
 extends EditorPlugin
-const AUTOLOAD_NAME = "LODManagerAutoload"
+const AUTOLOAD_NAME = "ImportanceLODManager"
 
 func _enter_tree():
 	# Initialization of the plugin goes here.

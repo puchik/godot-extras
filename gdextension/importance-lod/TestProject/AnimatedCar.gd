@@ -7,17 +7,14 @@ extends Node3D
 	Lod 4 means all of the meshes are invisible
 """
 
-
 @export var car_speed: float = 1.0
 
 var counter: int = 0
 
-
 func _ready() -> void:
-	#$Model.connect("lod_changed", Callable(self, "_on_lod_changed"))
-	#$Model.connect("freed", Callable(self, "_on_freed"))
+	$Model.connect("lod_changed", Callable(self, "_on_lod_changed"))
+	$Model.connect("freed", Callable(self, "_on_freed"))
 	pass
-
 
 func _process(delta: float) -> void:
 	var differential: float = counter * delta * car_speed
@@ -27,24 +24,29 @@ func _process(delta: float) -> void:
 	position = (Vector3(x, 0.35, z))
 	transform.basis = Basis(Vector3.UP, 9.5-differential)
 
-
-func enable() -> void:
-	set_process(true)
+func enable_animation() -> void:
 	$AnimationPlayer.play()
 
-
-func disable() -> void:
-	set_process(false)
+func disable_animation() -> void:
 	$AnimationPlayer.stop(false)
 
+func enable_movement() -> void:
+	set_process(true)
+
+func disable_movement() -> void:
+	set_process(false)
 
 func _on_lod_changed(lod: int) -> void:
 	print("AnimatedCar changing lod level: ", lod)
-	if lod > 1:
-		disable()
+	if lod > 2:
+		disable_movement()
+		disable_animation()
+	elif lod > 1:
+		disable_animation()
+		enable_movement()
 	else:
-		enable()
-
+		enable_animation()
+		enable_movement()
 
 func _on_freed() -> void:
 	print("AnimatedCar has been freed. RIP.")

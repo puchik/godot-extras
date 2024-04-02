@@ -375,7 +375,7 @@ void LODObject::show_lod(int lod) {
     }
 
     current_lod = lod;
-    call_deferred("emit_signal", "lod_changed", lod);
+    emit_signal("lod_changed", lod);
 
     // If lod requested doesn't exist, show last active lod until actual_hide_distance
     if (((lod < LOD_COUNT) && !lods[lod])) {
@@ -407,12 +407,12 @@ void LODObject::show_lod(int lod) {
 
 void LODObject::setup() {
     if (is_inside_tree()) {   
-        Node* lod_manager_node = get_node_or_null(NodePath("/root/LODManagerAutoload"));
+        Node* lod_manager_node = get_node_or_null(NodePath("/root/ImportanceLODManager"));
         if (lod_manager_node) {
             lod_manager = Object::cast_to<LODManager>(lod_manager_node);
         }
         if (!lod_manager) {
-            ERR_PRINT("Error, can't find /root/LODManagerAutoload. Make sure plugin is enabled.");
+            ERR_PRINT("Error, can't find /root/ImportanceLODManager. Make sure plugin is enabled.");
         }
         return;
     } else {

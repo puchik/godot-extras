@@ -17,7 +17,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
-LODManagerAutoload="*res://addons/importance_lod/lod_manager.tscn"
+ImportanceLODManager="*res://addons/importance_lod/lod_manager.tscn"
 
 [display]
 
