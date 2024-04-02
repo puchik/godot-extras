@@ -83,6 +83,7 @@ void LODObject::_bind_methods() {
     ClassDB::bind_method(D_METHOD("update_lod_AABB"), &LODObject::update_lod_AABB);
     ClassDB::bind_method(D_METHOD("update_lod_multipliers_from_manager"), &LODObject::update_lod_multipliers_from_manager);
     ClassDB::bind_method(D_METHOD("get_current_lod"), &LODObject::get_current_lod);
+    ClassDB::bind_method(D_METHOD("get_importance"), &LODObject::get_importance);
 
     // Signals
     ADD_SIGNAL(MethodInfo("lod_changed", PropertyInfo(Variant::INT, "new_lod")));
@@ -253,10 +254,10 @@ void LODObject::process_data(Vector3 camera_location) {
         return;
     }
  
-    if (use_screen_percentage) {
-        object_location -= transform_offset_AABB;
-    }
     float distance = camera_location.distance_to(object_location);
+    if (use_screen_percentage) {
+        distance -= transform_offset_AABB;
+    }
     // Calculate distances
     float actual_unload_distance = unload_distance * unload_distance_multiplier * global_distance_multiplier;
     float actual_hide_distance = hide_distance * hide_distance_multiplier * global_distance_multiplier;
@@ -279,6 +280,13 @@ void LODObject::process_data(Vector3 camera_location) {
     } else {
         call_deferred("show_lod", 0);
     }
+
+    // Calculate "importance" value.
+    float furthest_distance = MAX(actual_unload_distance, actual_hide_distance);
+    furthest_distance = MAX(furthest_distance, actual_lod3_distance);
+    furthest_distance = MAX(furthest_distance, actual_lod2_distance);
+    furthest_distance = MAX(furthest_distance, actual_lod1_distance);
+    importance = CLAMP((1.0 - (distance / furthest_distance)), 0.0, 1.0);
 }
 
 // Update the distances based on the AABB
@@ -320,9 +328,8 @@ void LODObject::update_lod_AABB() {
     }
 
     // Get the offset of the parent position and the overall AABB
-
     Vector3 object_scale = cached_scale;
-    transform_offset_AABB = (object_AABB.get_endpoint(0) + (object_AABB.size / 2.0f) * object_scale);
+    transform_offset_AABB = ((object_AABB.size / 2.0f) * object_scale).length();
 
     if (use_screen_percentage) {
         // Get the longest axis (conservative estimate of the object size vs screen)
@@ -400,12 +407,12 @@ void LODObject::show_lod(int lod) {
 
 void LODObject::setup() {
     if (is_inside_tree()) {   
-        Node* lod_manager_node = get_node_or_null(NodePath("/root/LODManager"));
+        Node* lod_manager_node = get_node_or_null(NodePath("/root/LODManagerAutoload"));
         if (lod_manager_node) {
             lod_manager = Object::cast_to<LODManager>(lod_manager_node);
         }
         if (!lod_manager) {
-            ERR_PRINT("Error, can't find /root/LODManager. Make sure plugin is enabled.");
+            ERR_PRINT("Error, can't find /root/LODManagerAutoload. Make sure plugin is enabled.");
         }
         return;
     } else {

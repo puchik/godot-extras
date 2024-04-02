@@ -16,6 +16,7 @@
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/geometry_instance3d.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include <ctime>
@@ -29,10 +30,6 @@
 #define LOD_COUNT 4
 
 #define PI 3.14159f
-
-#ifndef CLAMP
-#define CLAMP(m_a, m_min, m_max) (((m_a) < (m_min)) ? (m_min) : (((m_a) > (m_max)) ? m_max : m_a))
-#endif
 
 //using namespace godot;
 
@@ -52,7 +49,7 @@ private:
 
     Camera3D* camera = nullptr;
     float fov = 70.0f; // Need FOV for getting screen percentages
-    float tan_theta = 0.7002f; // Calc for 70.0f
+    float tan_theta = 0.7002f; // Default for FOV of 70.0f
 
     ProjectSettings* project_settings;
 
@@ -175,7 +172,6 @@ class LODObject : public VisualInstance3D {
     GDCLASS(LODObject, VisualInstance3D)
 
 protected:
-
     static void _bind_methods();
 
     LODManager* lod_manager;
@@ -211,6 +207,7 @@ protected:
 
     // The highest level of LOD found
     int last_lod = 0;
+    float importance = 0.0;
 
     // Keep track of last state to avoid unnecessary show/hide/process toggle calls
     int current_lod = -1;
@@ -221,7 +218,7 @@ protected:
     // Let's use the AABB centre for the centre of the object instead of
     // the parent's centre (if applicable). Instead of constantly 
     // accessing AABB, just store an offset.
-    Vector3 transform_offset_AABB;
+    float transform_offset_AABB;
 
     float global_distance_multiplier = 1.0f;
     float lod1_distance_multiplier = 1.0f;
@@ -233,7 +230,6 @@ protected:
     Vector3 cached_scale;
 
 public:
-
     // Distance by screen percentage
     // Use a conservative/worst-case method for getting the size of the object
     // relative to the screen (largest AABB axis on both viewport axes)
@@ -309,8 +305,9 @@ public:
     NodePath get_lod2_path() const { return lod2_path; };
     void set_lod3_path(const NodePath p_lod3_path) { lod3_path = p_lod3_path; };
     NodePath get_lod3_path() const { return lod3_path; };
-};
 
+    float get_importance() const { return importance; };
+};
 }
 
 #endif
