@@ -17,7 +17,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
-LODManager="*res://LODManager.tscn"
+LODManagerAutoload="*res://addons/importance_lod/lod_manager.tscn"
 
 [display]
 
@@ -26,7 +26,7 @@ window/size/viewport_height=1080
 
 [editor_plugins]
 
-enabled=PackedStringArray()
+enabled=PackedStringArray("res://addons/importance_lod/plugin.cfg")
 
 [rendering]
 
