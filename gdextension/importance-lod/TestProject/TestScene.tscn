@@ -149,7 +149,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.47256, 0, 4.54922)
 [node name="Cube" parent="Demo1_Switching/Cubes" instance=ExtResource("5")]
 
 [node name="Cube2" parent="Demo1_Switching/Cubes" instance=ExtResource("5")]
-transform = Transform3D(4.61867, 0, 0, 0, 4.61867, 0, 0, 0, 4.61867, 0, 0, -19.3774)
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0.0568447, -19.3774)
 
 [node name="Cube3" parent="Demo1_Switching/Cubes" instance=ExtResource("5")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 11.9911)
@@ -274,6 +274,12 @@ mesh = SubResource("27")
 [node name="Wheel4" type="MeshInstance3D" parent="Demo2_Signals/AnimatedCar/Model/LOD3"]
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0.752037, -0.479721, 1.24828)
 mesh = SubResource("27")
+
+[node name="ImportanceLabel" type="Label3D" parent="Demo2_Signals/AnimatedCar/Model"]
+transform = Transform3D(0.999999, -0.000780863, -0.000654337, 0.000780961, 1, 0.00014927, 0.000654221, -0.000149781, 1, 0, 1.76009, 0)
+pixel_size = 0.02
+text = "0.2
+"
 
 [node name="LeftLight" type="SpotLight3D" parent="Demo2_Signals/AnimatedCar"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.591178, 0.584198, -1.48224)

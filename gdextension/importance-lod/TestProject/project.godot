@@ -28,14 +28,17 @@ window/size/viewport_height=1080
 
 enabled=PackedStringArray("res://addons/importance_lod/plugin.cfg")
 
+[performance]
+
+importance_lod/lod1_multiplier=1.0
+importance_lod/lod2_multiplier=1.0
+importance_lod/lod3_multiplier=1.0
+importance_lod/hide_multiplier=1.0
+importance_lod/unload_multiplier=1.0
+importance_lod/global_multiplier=1.0
+
 [rendering]
 
 environment/defaults/default_environment="res://default_env.tres"
 quality/shadows/filter_mode=2
-quality/lod/global_multiplier=1.0
-quality/lod/lod1_multiplier=1.0
-quality/lod/lod2_multiplier=1.0
-quality/lod/lod3_multiplier=1.0
-quality/lod/hide_multiplier=1.0
-quality/lod/unload_multiplier=1.0
 quality/lod/shadow_disable_multiplier=1.0

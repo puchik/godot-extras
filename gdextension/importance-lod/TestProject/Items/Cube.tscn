@@ -1,4 +1,6 @@
-[gd_scene load_steps=6 format=3 uid="uid://cd2taly43auyl"]
+[gd_scene load_steps=7 format=3 uid="uid://cd2taly43auyl"]
+
+[ext_resource type="Script" path="res://Items/LODCube.gd" id="1_3esx5"]
 
 [sub_resource type="StandardMaterial3D" id="1"]
 albedo_color = Color(0.133333, 1, 0, 1)
@@ -14,24 +16,37 @@ albedo_color = Color(1, 0.929412, 0, 1)
 [sub_resource type="StandardMaterial3D" id="5"]
 albedo_color = Color(1, 0, 0, 1)
 
-[node name="LODCube" type="LODObject"]
+[node name="LODCube" type="Node3D"]
+script = ExtResource("1_3esx5")
 
-[node name="LOD0" type="MeshInstance3D" parent="."]
+[node name="LODObject" type="LODObject" parent="."]
+
+[node name="LOD0" type="MeshInstance3D" parent="LODObject"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.518, 0)
 material_override = SubResource("1")
 mesh = SubResource("2")
+skeleton = NodePath("../..")
 
-[node name="LOD1" type="MeshInstance3D" parent="."]
+[node name="LOD1" type="MeshInstance3D" parent="LODObject"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.518, 0)
 material_override = SubResource("3")
 mesh = SubResource("2")
+skeleton = NodePath("../..")
 
-[node name="LOD2" type="MeshInstance3D" parent="."]
+[node name="LOD2" type="MeshInstance3D" parent="LODObject"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.518, 0)
 material_override = SubResource("4")
 mesh = SubResource("2")
+skeleton = NodePath("../..")
 
-[node name="LOD3" type="MeshInstance3D" parent="."]
+[node name="LOD3" type="MeshInstance3D" parent="LODObject"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.518, 0)
 material_override = SubResource("5")
 mesh = SubResource("2")
+skeleton = NodePath("../..")
+
+[node name="ImportanceLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.32524, 0)
+pixel_size = 0.015
+text = "0.2
+"

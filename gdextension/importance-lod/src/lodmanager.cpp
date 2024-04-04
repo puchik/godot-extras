@@ -391,17 +391,15 @@ void LODManager::remove_object(LODObject* lod_object) {
     }
 }
 
-
 void LODManager::update_lod_multipliers_from_settings() {
     debug_level_print(DEBUG_PRINT_ACTIONS, "LODManager: Loading LOD multipliers from the project settings.");
     // Load multipliers from project settings
-    global_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/global_multiplier");
-    lod1_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/lod1_multiplier");
-    lod2_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/lod2_multiplier");
-    lod3_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/lod3_multiplier");
-    hide_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/hide_multiplier");
-    unload_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/unload_multiplier");
-    shadow_distance_multiplier = (float)project_settings->get_setting("rendering/quality/lod/shadow_disable_multiplier");
+    global_distance_multiplier = (float)project_settings->get_setting("performance/importance_lod/global_multiplier");
+    lod1_distance_multiplier = (float)project_settings->get_setting("performance/importance_lod/lod1_multiplier");
+    lod2_distance_multiplier = (float)project_settings->get_setting("performance/importance_lod/lod2_multiplier");
+    lod3_distance_multiplier = (float)project_settings->get_setting("performance/importance_lod/lod3_multiplier");
+    hide_distance_multiplier = (float)project_settings->get_setting("performance/importance_lod/hide_multiplier");
+    unload_distance_multiplier = (float)project_settings->get_setting("performance/importance_lod/unload_multiplier");
 
     // Update LOD objects' multipliers
     update_lod_multipliers_in_objects();

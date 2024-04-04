@@ -2,6 +2,9 @@
 #include <string>
 #include <cmath>
 
+// The LOD "index" to return in the signal if the new LOD state is hidden.
+#define LOD_HIDDEN_INDEX -1
+
 using namespace godot;
 
 void LODObject::_bind_methods() {
@@ -230,13 +233,6 @@ void LODObject::_ready() {
         }
     }
 
-    // Set up initial shadow casting
-    for (int i = 0; i < max_shadow_caster; i++) {
-        if (lods[i]) {
-            lods[i]->set("cast_shadow", GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
-        }
-    }
-
     update_lod_AABB();
     update_lod_multipliers_from_manager();
     try_register();
@@ -270,7 +266,7 @@ void LODObject::process_data(Vector3 camera_location) {
         call_deferred("emit_signal", "freed");
         queue_free();
     } else if ((actual_hide_distance > 0.0f) && (distance > actual_hide_distance)) {
-        call_deferred("show_lod", LOD_COUNT);
+        call_deferred("show_lod", LOD_HIDDEN_INDEX);
     } else if ((actual_lod3_distance > 0.0f) && (distance > actual_lod3_distance)) {
         call_deferred("show_lod", 3);
     } else if ((actual_lod2_distance > 0.0f) && (distance > actual_lod2_distance)) {
@@ -377,27 +373,15 @@ void LODObject::show_lod(int lod) {
     current_lod = lod;
     emit_signal("lod_changed", lod);
 
-    // If lod requested doesn't exist, show last active lod until actual_hide_distance
+    // If requested LOD doesn't exist, show last active lod until actual_hide_distance
     if (((lod < LOD_COUNT) && !lods[lod])) {
         lod = last_lod;
     }
 
-    // Count backwards to hit shadow caster first
     for(int i = last_lod; i >= 0 ; i--) {
         if (lods[i] && lods[i]->is_inside_tree()) {
             if (i == lod) {
                 lods[i]->show();
-
-                // If shadow casting enabled
-                if (lods[max_shadow_caster] && max_shadow_caster > 0) {
-                    // If lower LOD, turn on shadow caster, otherwise reset it
-                    if (i < max_shadow_caster) {
-                        lods[max_shadow_caster]->set("cast_shadow", GeometryInstance3D::SHADOW_CASTING_SETTING_SHADOWS_ONLY);
-                        lods[max_shadow_caster]->show();
-                    } else {
-                        lods[max_shadow_caster]->set("cast_shadow", GeometryInstance3D::SHADOW_CASTING_SETTING_ON);
-                    }
-                }
             } else if (lods[i]->is_visible()) {
                 lods[i]->hide();
             }

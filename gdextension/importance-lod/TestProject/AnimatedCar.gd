@@ -23,6 +23,12 @@ func _process(delta: float) -> void:
 	var z: float = 5 * sin(differential)
 	position = (Vector3(x, 0.35, z))
 	transform.basis = Basis(Vector3.UP, 9.5-differential)
+	
+	var importance_text = "%f" % ($Model.get_importance())
+	$Model/ImportanceLabel.text = importance_text
+	$Model/ImportanceLabel.look_at(get_viewport().get_camera_3d().position)
+	# look_at in Godot is opposite from what you'd expect... marked as "intended behaviour", so we flip manually
+	$Model/ImportanceLabel.scale.x = -1
 
 func enable_animation() -> void:
 	$AnimationPlayer.play()
@@ -44,7 +50,7 @@ func _on_lod_changed(lod: int) -> void:
 	elif lod > 1:
 		disable_animation()
 		enable_movement()
-	else:
+	elif lod >= 0:
 		enable_animation()
 		enable_movement()
 

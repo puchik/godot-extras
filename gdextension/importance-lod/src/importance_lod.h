@@ -94,8 +94,8 @@ public:
     void _exit_tree();
 
     // Returns false if operation failed.
-    bool add_object(LODObject* lbc);
-    void remove_object(LODObject* lbc);
+    bool add_object(LODObject* lod_object);
+    void remove_object(LODObject* lod_object);
     
     // Reading project settings is pretty expensive... set up to only update manually by default
     // but we have the option to update every loop, too
@@ -123,7 +123,6 @@ public:
     float lod3_distance_multiplier = 1.0f;
     float hide_distance_multiplier = 1.0f;
     float unload_distance_multiplier = 1.0f;
-    float shadow_distance_multiplier = 1.0f;
 
     int lod_object_count = 0;
     // Whether to use multithreading or not
@@ -211,9 +210,6 @@ protected:
 
     // Keep track of last state to avoid unnecessary show/hide/process toggle calls
     int current_lod = -1;
-
-    // This LOD is the maximum used for shadow casting. If 0 (LOD0), it's effectively disabled.
-    int max_shadow_caster = 0;
 
     // Let's use the AABB centre for the centre of the object instead of
     // the parent's centre (if applicable). Instead of constantly 
