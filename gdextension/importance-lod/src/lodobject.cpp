@@ -123,7 +123,7 @@ void LODObject::_enter_tree() {
         return;
     }
 
-    cached_scale = get_scale();
+    cached_scale = get_global_transform().basis.get_scale();
 
     // Ready and not registered? Probably re-entered the tree and need to re-regster.
     if (!registered && ready_finished) {
@@ -154,7 +154,7 @@ void LODObject::_ready() {
     }
 
     setup();
-    lod_manager->debug_level_print(1, get_name() + String(": Initializing Mesh LOD."));
+    lod_manager->debug_level_print(1, get_name() + String(": Initializing Importance LOD."));
 
     /// Get the VisualInstance3D objects for LOD nodes
     // If there's no path, search for any children with "LOD + n" in its name
@@ -412,11 +412,11 @@ void LODObject::setup() {
             lod_manager = Object::cast_to<LODManager>(lod_manager_node);
         }
         if (!lod_manager) {
-            ERR_PRINT("Error, can't find /root/ImportanceLODManager. Make sure plugin is enabled.");
+            ERR_PRINT("Importance LOD Manager was not found in Autoloads at /root/ImportanceLODManager. Make sure the plugin is enabled.");
         }
         return;
     } else {
-        ERR_PRINT("Error, LODObject not in inside the scene tree.");
+        ERR_PRINT("LODObject not inside the scene tree.");
     }
 }
 
@@ -444,7 +444,7 @@ void LODObject::try_register() {
     if (lod_manager) {
         registered = lod_manager->add_object(this);
     } else {
-        ERR_PRINT(String(get_name()) + ": Error, LODManager is not set during registration.");
+        ERR_PRINT(String(get_name()) + ": Importance LOD Manager was not set during LODObject registration.");
     }
 }
 
@@ -456,7 +456,7 @@ void LODObject::unregister() {
         lod_manager->remove_object(this);
         registered = false;
     } else {
-        ERR_PRINT(String(get_name()) + ": Error, LODManager is not set during unregistration.");
+        ERR_PRINT(String(get_name()) + ": Importance LOD Manager was not set during LODObject unregistration.");
     }
 }
 
