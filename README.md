@@ -1,14 +1,9 @@
 # godot-extras
-## NOTE: The main branch is a WIP of porting to Godot 4! Up-to-date and functional projects are on the 3.x at this time!
-## Undergoing some restructuring right now!
-My collection of various plugins, modules, or patches for Godot.
+## The master branch is developed for 4.x and a 3.x branch is available for Godot 3.
+Optimization and rendering work/plugins for Godot Engine 4.x and 3.x.
 
-Mostly optimization and shaders.
-
-Everything is licensed under MIT.
-
-## [LOD in C++](https://github.com/puchik/godot-extras/tree/master/gdnative/multi-lod)
-A LOD system that can be applied directly to any Spatial. There are also more specialized variants for Lights, GIProbes, and MultiMeshInstances.
+## [Multithreaded LOD in C++ with "Importance" value](https://github.com/puchik/godot-extras/tree/master/gdextension/importance-lod)
+A LOD-like system which contains a LODObject that controls child LOD levels through a LODManager autoload. It calculates a discrete LOD value based on your input parameters, supports switching child nodes when a given LOD is reached, sends signals you can hook into to perform distance optimizations (like AI complexity), and calculates a float "Importance" value. Partially inspired by the [Significance Manager](https://dev.epicgames.com/documentation/en-us/unreal-engine/significance-manager-in-unreal-engine) in Unreal Engine.
 
 ## [Terrain/Vertex colour mixing shader](https://github.com/puchik/godot-extras/tree/master/visual/terrain-vertex-shader)
 A shader that was originally intended for terrains, but can be applied to any mesh to add material mixing, detail, and more.
