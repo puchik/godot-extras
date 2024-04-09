@@ -6,7 +6,7 @@ You use these values and signals to modify your object's workload or appearance 
 
 It's inspired partially by Unreal's [Significance Manager](https://dev.epicgames.com/documentation/en-us/unreal-engine/significance-manager-in-unreal-engine), which doesn't improve performance on its own but relies on user-specified optimizations. However, with my plugin you can use it for the bare minimum of hiding and/or disabling objects and nodes as a quick optimization.
 
-![Importance LOD GIF](https://github.com/puchik/godot-extras/tree/master/gdextension/importance-lod/etc/importance-lod.gif)
+![Importance LOD GIF](https://puchik.vercel.app/images/importance-lod/importance-lod.gif)
 
 The car animation stops when you get far enough. Notice that the headlight colours do not animate when the car is yellow.
 
