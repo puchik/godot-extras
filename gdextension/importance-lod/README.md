@@ -2,7 +2,7 @@
 ## Description
 Godot 4 comes with useful LOD functionality built in many of its features, but there are cases where additional fine-tuning may be helpful. As a result, my [LOD plugin for Godot 3](https://github.com/puchik/godot-extras/tree/3.x/gdnative/multi-lod) has been updated to Godot 4 in a slightly different form; it focuses on replacement of nodes and signal dispatching along with a continuous "Importance" value for judging how many resources should be dedicated to that given node. 
 
-You use these values and signals to modify your object's workload or appearance based on distance away from the player, such as reducing AI logic for objects that are further away. You could also store individual nodes in a LOD0 parent, and then use lower LOD nodes as parent nodes for merged versions of those nodes, like an HLOD.
+You use these values and signals to modify your object's workload or appearance based on distance away from the player, such as reducing AI logic for objects that are further away.
 
 It's inspired partially by Unreal's [Significance Manager](https://dev.epicgames.com/documentation/en-us/unreal-engine/significance-manager-in-unreal-engine), which doesn't improve performance on its own but relies on user-specified optimizations. However, with my plugin you can use it for the bare minimum of hiding and/or disabling objects and nodes as a quick optimization.
 
