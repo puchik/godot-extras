@@ -356,25 +356,20 @@ void LODObject::update_lod_multipliers_from_manager() {
         global_distance_multiplier = 1.0f;
         lod1_distance_multiplier = 1.0f;
         lod2_distance_multiplier = 1.0f;
-        lod2_distance_multiplier = 1.0f;
+        lod3_distance_multiplier = 1.0f;
         hide_distance_multiplier = 1.0f;
         unload_distance_multiplier = 1.0f;
     }
 }
 
 void LODObject::show_lod(int lod) {
-    // If lod >= LOD_COUNT, all LODS will be hidden
-   
     // Do nothing if already on this level
     if (lod == current_lod) {
         return;
     }
 
-    current_lod = lod;
-    emit_signal("lod_changed", lod);
-
     // If requested LOD doesn't exist, show last active lod until actual_hide_distance
-    if (((lod < LOD_COUNT) && !lods[lod])) {
+    if (((lod < LOD_COUNT) && !lods[lod]) && lod != LOD_HIDDEN_INDEX) {
         lod = last_lod;
     }
 
@@ -387,6 +382,9 @@ void LODObject::show_lod(int lod) {
             }
         }
     }   
+
+    current_lod = lod;
+    emit_signal("lod_changed", lod);
 }
 
 void LODObject::setup() {

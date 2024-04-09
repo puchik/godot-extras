@@ -1,6 +1,9 @@
 #ifndef IMPORTANCE_LOD_H
 #define IMPORTANCE_LOD_H
 
+// LODs start at 0
+#define DEFAULT_LOD_NUM 0
+
 #include "godot_cpp/core/class_db.hpp"
 #include <godot_cpp/godot.hpp>
 
@@ -209,7 +212,7 @@ protected:
     float importance = 0.0;
 
     // Keep track of last state to avoid unnecessary show/hide/process toggle calls
-    int current_lod = -1;
+    int current_lod = DEFAULT_LOD_NUM;
 
     // Let's use the AABB centre for the centre of the object instead of
     // the parent's centre (if applicable). Instead of constantly 

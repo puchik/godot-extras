@@ -7,22 +7,29 @@ extends Node3D
 	Lod 4 means all of the meshes are invisible
 """
 
-@export var car_speed: float = 1.0
+@export var car_speed: float = 1.25
+@export var circle_path_radius: float = 5.0
 
-var counter: int = 0
+var counter: float = 0.0
+
+var cached_x: float = 0.0
+var cached_y: float = 0.0
+var cached_z: float = 0.0
 
 func _ready() -> void:
 	$Model.connect("lod_changed", Callable(self, "_on_lod_changed"))
 	$Model.connect("freed", Callable(self, "_on_freed"))
+	cached_x = global_position.x
+	cached_y = global_position.y
+	cached_z = global_position.z
 	pass
 
 func _process(delta: float) -> void:
-	var differential: float = counter * delta * car_speed
-	counter += 1
-	var x: float = 5 * cos(differential)
-	var z: float = 5 * sin(differential)
+	counter += (delta * car_speed)
+	var x: float = circle_path_radius * sin(counter) + cached_x
+	var z: float = circle_path_radius * cos(counter) + cached_z
 	position = (Vector3(x, 0.35, z))
-	transform.basis = Basis(Vector3.UP, 9.5-differential)
+	rotation.y = (counter) - 1.5
 	
 	var importance_text = "%f" % ($Model.get_importance())
 	$Model/ImportanceLabel.text = importance_text
@@ -44,7 +51,7 @@ func disable_movement() -> void:
 
 func _on_lod_changed(lod: int) -> void:
 	print("AnimatedCar changing lod level: ", lod)
-	if lod > 2:
+	if lod > 2 || lod < 0:
 		disable_movement()
 		disable_animation()
 	elif lod > 1:
