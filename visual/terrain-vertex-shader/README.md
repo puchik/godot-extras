@@ -29,7 +29,7 @@ Under those, you'll find other settings:
 
 * Enabling Distance Culling will make the object vertices only appear between Min Dist and Max Dist (e.g. object is visible between 10m and 20m).
 
-* Prevent tiling will use an algorithm loosely based on Technique 3 on [this](www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm) page to reduce appearance of texture tiling.
+* Prevent tiling will use an algorithm loosely based on Technique 3 on [this](https://iquilezles.org/articles/texturerepetition/) page to reduce appearance of texture tiling.
 NOTE: You need to provide a noise texture for anti-tiling to work correctly. There is one provided in the example project.
 
 * Height blending will use the displacement maps to blend materials rather than a simple fade.
