@@ -1,4 +1,3 @@
-[submodule "gdextension/importance-lod/godot-cpp"]
-	path = gdextension/importance-lod/godot-cpp
-	url = https://github.com/godotengine/godot-cpp
-	branch = 4.2
+[submodule "gdextension/importance-lod"]
+	path = gdextension/importance-lod
+	url = https://github.com/puchik/godot-importance-lod.git
